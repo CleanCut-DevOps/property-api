@@ -1,1 +1,1 @@
-# property-management-service
+# API Service for user property management
