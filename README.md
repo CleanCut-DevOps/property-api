@@ -18,4 +18,4 @@ Upon cloning this repository:
 
 Upon installation:
 - run `php artisan migrate:fresh` to create tables in database
-- run `php artisan serve --port=8001` to start the server on a local environment
+- run `php artisan serve --port=8002` to start the server on a local environment
