@@ -53,7 +53,7 @@ class PropertyAddress extends Model
      *
      * @var bool
      */
-    public $timestamps = false;
+    public $timestamps = [ "updated_at" ];
 
     /**
      * The table associated with the model.
@@ -103,17 +103,6 @@ class PropertyAddress extends Model
      * @var array<string, string>
      */
     protected $casts = ['updated_at' => 'timestamp'];
-
-
-
-    public static function boot(): void
-    {
-        parent::boot();
-
-        static::creating(function ($model) {
-            $model->updated_at = $model->freshTimestamp();
-        });
-    }
 
     /**
      * Get the property that owns the rooms.
