@@ -7,6 +7,10 @@ use App\Http\Middleware\ValidateCreate;
 use App\Http\Middleware\ValidateJWT;
 use App\Http\Middleware\ValidateUpdate;
 use App\Models\Property;
+use App\Models\PropertyAddress;
+use App\Models\PropertyImage;
+use App\Models\PropertyRooms;
+use App\Models\PropertyType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -66,30 +70,41 @@ class PropertyController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $created = Property::create([
-            "user_id" => $request->user_id,
-            "name" => request("name"),
-            "address" => request("address"),
-            "bedrooms" => request("bedrooms"),
-            "bathrooms" => request("bathrooms"),
-            "description" => request("description"),
-            "price" => request("price"),
-            "sq_ft" => request("sq_ft"),
-            "type" => request("type"),
+        $type = PropertyType::whereLabel($request->type)->first();
+
+        $request['type_id'] = $type->id;
+
+        $createdProperty = Property::create($request->all());
+
+        PropertyAddress::create([
+            "property_id" => $createdProperty->id,
+            "line_1" => $request->address['line_1'],
+            "line_2" => $request->address['line_2'],
+            "city" => $request->address['city'],
+            "state" => $request->address['state'],
+            "postal_code" => $request->address['postal_code'],
         ]);
 
-        foreach ($request->images as $imagePath) {
-            $created->images()->create([
-                "path" => $imagePath,
+        PropertyRooms::create([
+            "property_id" => $createdProperty->id,
+            "bedrooms" => $request->rooms['bedrooms'],
+            "bathrooms" => $request->rooms['bathrooms'],
+            "kitchens" => $request->rooms['kitchens'],
+            "living_rooms" => $request->rooms['living_rooms'],
+            "utility_rooms" => $request->rooms['utility_rooms'],
+        ]);
+
+        foreach ($request->images as $image) {
+            PropertyImage::create([
+                "property_id" => $createdProperty->id,
+                "url" => $image,
             ]);
         }
-
-        $property = Property::whereId($created->id)->first();
 
         return response()->json([
             "type" => "Successful request",
             "message" => "User property created successfully",
-            "property" => $property,
+            "property" => $createdProperty->refresh(),
         ], 201);
     }
 
@@ -104,37 +119,50 @@ class PropertyController extends Controller
     {
         $property = Property::whereId($id)->first();
 
-        if (!empty($request->name)) $property->name = $request->name;
-        if (!empty($request->type)) $property->type = $request->type;
-        if (!empty($request->price)) $property->price = $request->price;
-        if (!empty($request->sq_ft)) $property->sq_ft = $request->sq_ft;
-        if (!empty($request->address)) $property->address = $request->address;
-        if (!empty($request->bedrooms)) $property->bedrooms = $request->bedrooms;
-        if (!empty($request->bathrooms)) $property->bathrooms = $request->bathrooms;
-        if (!empty($request->description)) $property->description = $request->description;
+        $property->update($request->all());
 
-        $propertyImages = $property->images()->get();
 
-        foreach ($request->images as $imageURL) {
-            if (!$propertyImages->contains("path", $imageURL)) {
-                $property->images()->create([
-                    "path" => $imageURL,
-                ]);
-            }
+
+
+        if (!empty($request->address)) {
+            $address = PropertyAddress::wherePropertyId($id);
+
+            $address->update($request->address);
         }
 
-        foreach ($propertyImages as $image) {
-            if (!in_array($image->path, $request->images)) {
-                $image->delete();
-            }
+        if (!empty($request->rooms)) {
+            $rooms = PropertyRooms::wherePropertyId($id);
+
+            $rooms->update($request->rooms);
         }
 
-        $property->save();
+        if (!empty($request->images)) {
+            $raw = $property->images()->get();
+
+            $imageURLs =  $raw->map(function ($image) { return $image->url; });
+
+            foreach ($request->images as $url) {
+                if (!$imageURLs->contains($url)) {
+                    PropertyImage::create([
+                        "property_id" => $id,
+                        "url" => $url
+                    ]);
+                }
+            }
+
+            foreach ($imageURLs as $url) {
+                if (!in_array($url, $request->images)) {
+                    $url = PropertyImage::wherePropertyId($id)->whereUrl($url)->first();
+
+                    $url->delete();
+                }
+            }
+        }
 
         return response()->json([
             "type" => "Successful request",
             "message" => "User property updated successfully",
-            "property" => $property
+            "property" => $property->refresh()
         ], 201);
     }
 
