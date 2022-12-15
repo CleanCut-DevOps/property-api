@@ -11,7 +11,7 @@ class PropertyImage extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'property_images';
+    protected $table = 'images';
 
     /**
      * The primary key associated with the table.
@@ -40,10 +40,7 @@ class PropertyImage extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'property_id',
-        'path',
-    ];
+    protected $fillable = [ 'property_id', 'url' ];
 
     /**
      * Get the property that owns the image.

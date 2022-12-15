@@ -5,13 +5,29 @@ namespace App\Models;
 use App\Traits\UUID;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 
 class Property extends Model
 {
     use HasFactory, SoftDeletes, Notifiable, UUID;
+
+    /**
+     * Indicates if the model's ID is auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
+
+    /**
+     * Indicates if the model should be timestamped.
+     *
+     * @var bool
+     */
+    public $timestamps = true;
 
     /**
      * The table associated with the model.
@@ -28,26 +44,11 @@ class Property extends Model
     protected $primaryKey = 'id';
 
     /**
-     * Indicates if the model's ID is auto-incrementing.
-     *
-     * @var bool
-     */
-    public $incrementing = true;
-
-    /**
      * The data type of the ID.
      *
      * @var string
      */
     protected $keyType = 'string';
-
-    /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
-    public $timestamps = false;
-
 
     /**
      * The attributes that are mass assignable.
@@ -56,14 +57,9 @@ class Property extends Model
      */
     protected $fillable = [
         'user_id',
+        'type_id',
         'name',
-        'address',
-        'bedrooms',
-        'bathrooms',
         'description',
-        'price',
-        'sq_ft',
-        'type',
     ];
 
     /**
@@ -83,6 +79,36 @@ class Property extends Model
         'created_at' => 'timestamp',
         'updated_at' => 'timestamp',
     ];
+
+    /**
+     * Get the type that owns the property.
+     *
+     * @return BelongsTo
+     */
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(PropertyType::class, 'type_id', 'id');
+    }
+
+    /**
+     * Get the property that owns the image.
+     *
+     * @return HasOne
+     */
+    public function rooms(): HasOne
+    {
+        return $this->hasOne(PropertyRooms::class, 'property_id', 'id');
+    }
+
+    /**
+     * Get the property that owns the image.
+     *
+     * @return HasOne
+     */
+    public function address(): HasOne
+    {
+        return $this->hasOne(PropertyAddress::class, 'property_id', 'id');
+    }
 
     /**
      * Get the property that owns the image.
