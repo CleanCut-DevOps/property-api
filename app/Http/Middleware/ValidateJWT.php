@@ -20,7 +20,7 @@ class ValidateJWT
     public function handle(Request $request, Closure $next): RedirectResponse|JSONResponse
     {
         try {
-            $request->user_id = JWTAuth::getPayload(JWTAuth::getToken())['sub'];
+            $request['user_id'] = JWTAuth::getPayload(JWTAuth::getToken())['sub'];
 
             return $next($request);
         } catch (\Exception $e) {
