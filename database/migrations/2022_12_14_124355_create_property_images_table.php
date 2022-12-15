@@ -17,6 +17,9 @@ return new class extends Migration
             $table->id();
             $table->uuid('property_id');
             $table->string('path');
+            $table->string('caption')->nullable();
+            $table->softDeletes();
+            $table->timestamps();
 
             $table->foreign('property_id')->references('id')->on('properties')->onDelete('cascade');
         });
