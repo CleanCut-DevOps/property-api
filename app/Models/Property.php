@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Notifications\DatabaseNotification;
@@ -67,7 +69,15 @@ class Property extends Model
      *
      * @var bool
      */
-    public $incrementing = true;
+    public $incrementing = false;
+
+    /**
+     * Indicates if the model should be timestamped.
+     *
+     * @var bool
+     */
+    public $timestamps = true;
+
     /**
      * The table associated with the model.
      *
@@ -93,14 +103,9 @@ class Property extends Model
      */
     protected $fillable = [
         'user_id',
+        'type_id',
         'name',
-        'address',
-        'bedrooms',
-        'bathrooms',
         'description',
-        'price',
-        'sq_ft',
-        'type',
     ];
 
     /**
@@ -120,6 +125,36 @@ class Property extends Model
         'created_at' => 'timestamp',
         'updated_at' => 'timestamp',
     ];
+
+    /**
+     * Get the type that owns the property.
+     *
+     * @return BelongsTo
+     */
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(PropertyType::class, 'type_id', 'id');
+    }
+
+    /**
+     * Get the property that owns the image.
+     *
+     * @return HasOne
+     */
+    public function rooms(): HasOne
+    {
+        return $this->hasOne(PropertyRooms::class, 'property_id', 'id');
+    }
+
+    /**
+     * Get the property that owns the image.
+     *
+     * @return HasOne
+     */
+    public function address(): HasOne
+    {
+        return $this->hasOne(PropertyAddress::class, 'property_id', 'id');
+    }
 
     /**
      * Get the property that owns the image.
