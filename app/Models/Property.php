@@ -106,7 +106,7 @@ class Property extends Model
      *
      * @var array<int, string>
      */
-    protected $hidden = ['deleted_at'];
+    protected $hidden = ['deleted_at', 'type_id'];
 
     /**
      * The attributes that should be cast.
@@ -162,40 +162,44 @@ class Property extends Model
     /**
      * Get the property's type.
      *
-     * @return Collection
+     * @return string
      */
-    public function getTypeAttribute(): Collection
+    public function getTypeAttribute(): string
     {
-        return $this->type()->get();
+        return $this->type()->first()->label;
     }
 
     /**
      * Get the property's rooms.
      *
-     * @return Collection
+     * @return Model
      */
-    public function getRoomsAttribute(): Collection
+    public function getRoomsAttribute(): Model
     {
-        return $this->rooms()->get();
+        return $this->rooms()->first();
     }
 
     /**
      * Get the property's address.
      *
-     * @return Collection
+     * @return Model
      */
-    public function getAddressAttribute(): Collection
+    public function getAddressAttribute(): Model
     {
-        return $this->address()->get();
+        return $this->address()->first();
     }
 
     /**
      * Get the property's images.
      *
-     * @return Collection
+     * @return \Illuminate\Support\Collection
      */
-    public function getImagesAttribute(): Collection
+    public function getImagesAttribute(): \Illuminate\Support\Collection
     {
-        return $this->images()->get();
+        $raw = $this->images()->get();
+
+        return $raw->map(function ($image) {
+            return $image->url;
+        });
     }
 }
