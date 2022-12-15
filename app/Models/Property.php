@@ -3,15 +3,54 @@
 namespace App\Models;
 
 use App\Traits\UUID;
+use Eloquent;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * App\Models\Property
+ *
+ * @property string $id
+ * @property string $user_id
+ * @property string $type_id
+ * @property string $name
+ * @property string $description
+ * @property int|null $created_at
+ * @property int|null $updated_at
+ * @property int|null $deleted_at
+ * @property-read Collection $address
+ * @property-read Collection|PropertyImage[] $images
+ * @property-read PropertyRooms|null $rooms
+ * @property-read PropertyType $type
+ * @property-read int|null $images_count
+ * @property-read DatabaseNotificationCollection|DatabaseNotification[] $notifications
+ * @property-read int|null $notifications_count
+ * @method static EloquentBuilder|Property newModelQuery()
+ * @method static EloquentBuilder|Property newQuery()
+ * @method static QueryBuilder|Property onlyTrashed()
+ * @method static EloquentBuilder|Property query()
+ * @method static EloquentBuilder|Property whereCreatedAt($value)
+ * @method static EloquentBuilder|Property whereDeletedAt($value)
+ * @method static EloquentBuilder|Property whereDescription($value)
+ * @method static EloquentBuilder|Property whereId($value)
+ * @method static EloquentBuilder|Property whereName($value)
+ * @method static EloquentBuilder|Property whereTypeId($value)
+ * @method static EloquentBuilder|Property whereUpdatedAt($value)
+ * @method static EloquentBuilder|Property whereUserId($value)
+ * @method static QueryBuilder|Property withTrashed()
+ * @method static QueryBuilder|Property withoutTrashed()
+ * @mixin Eloquent
+ */
 class Property extends Model
 {
     use HasFactory, SoftDeletes, Notifiable, UUID;
