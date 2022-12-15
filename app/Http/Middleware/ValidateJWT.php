@@ -21,6 +21,7 @@ class ValidateJWT
     {
         try {
             $request->user_id = JWTAuth::getPayload(JWTAuth::getToken())['sub'];
+
             return $next($request);
         } catch (\Exception $e) {
             if (request()->header("Authorization")) {
