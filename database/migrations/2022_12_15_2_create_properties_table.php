@@ -16,16 +16,13 @@ return new class extends Migration
         Schema::create('properties', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('user_id');
+            $table->uuid('type_id');
             $table->string('name');
-            $table->string('address');
-            $table->integer('bedrooms');
-            $table->integer('bathrooms');
-            $table->longText('description');
-            $table->unsignedDecimal('price', 12, 2);
-            $table->unsignedDecimal('sq_ft',12, 2)->nullable();
-            $table->enum('type', ['Single-family home', 'Duplex', 'Triplex', 'Fourplex', 'Condominium', 'Townhouse', 'Apartment building', 'Co-op', 'Manufactured home', 'Tiny home', 'Office building', 'Warehouse']);
+            $table->text('description');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->foreign('type_id')->references('id')->on('types');
         });
     }
 

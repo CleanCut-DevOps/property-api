@@ -40,13 +40,8 @@ class PropertyImage extends Model
 {
     use HasFactory, SoftDeletes;
 
-    /**
-     * Indicates if the model's ID is auto-incrementing.
-     *
-     * @var bool
-     */
-    public $incrementing = true;
-    protected $table = 'property_images';
+    protected $table = 'images';
+
     /**
      * The primary key associated with the table.
      *
@@ -75,11 +70,7 @@ class PropertyImage extends Model
      *
      * @var array<string, string>
      */
-    protected $casts = [
-        'deleted_at' => 'timestamp',
-        'created_at' => 'timestamp',
-        'updated_at' => 'timestamp',
-    ];
+    protected $fillable = [ 'property_id', 'url' ];
 
     /**
      * Get the property that owns the image.
