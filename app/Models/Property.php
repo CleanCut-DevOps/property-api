@@ -30,7 +30,7 @@ use Illuminate\Notifications\Notifiable;
  * @property string $type
  * @property int|null $created_at
  * @property int|null $updated_at
- * @property-read Collection|PropertyImage[] $images
+ * @property Collection|PropertyImage[] $images
  * @property-read int|null $images_count
  * @property-read DatabaseNotificationCollection|DatabaseNotification[] $notifications
  * @property-read int|null $notifications_count
@@ -53,10 +53,14 @@ use Illuminate\Notifications\Notifiable;
  * @method static QueryBuilder|Property withTrashed()
  * @method static QueryBuilder|Property withoutTrashed()
  * @mixin Eloquent
+ * @property int|null $deleted_at
+ * @method static EloquentBuilder|Property whereDeletedAt($value)
  */
 class Property extends Model
 {
     use HasFactory, SoftDeletes, Notifiable, UUID;
+
+    public $appends = ['images'];
 
     /**
      * Indicates if the model's ID is auto-incrementing.
@@ -64,12 +68,6 @@ class Property extends Model
      * @var bool
      */
     public $incrementing = true;
-    /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
-    public $timestamps = false;
     /**
      * The table associated with the model.
      *
@@ -131,5 +129,15 @@ class Property extends Model
     public function images(): HasMany
     {
         return $this->hasMany(PropertyImage::class, 'property_id', 'id');
+    }
+
+    /**
+     * Get the property's images.
+     *
+     * @return Collection
+     */
+    public function getImagesAttribute(): Collection
+    {
+        return $this->images()->get();
     }
 }

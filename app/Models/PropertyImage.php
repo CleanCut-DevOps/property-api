@@ -27,6 +27,14 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  * @method static QueryBuilder|PropertyImage withTrashed()
  * @method static QueryBuilder|PropertyImage withoutTrashed()
  * @mixin Eloquent
+ * @property string|null $caption
+ * @property int|null $deleted_at
+ * @property int|null $created_at
+ * @property int|null $updated_at
+ * @method static EloquentBuilder|PropertyImage whereCaption($value)
+ * @method static EloquentBuilder|PropertyImage whereCreatedAt($value)
+ * @method static EloquentBuilder|PropertyImage whereDeletedAt($value)
+ * @method static EloquentBuilder|PropertyImage whereUpdatedAt($value)
  */
 class PropertyImage extends Model
 {
@@ -38,12 +46,6 @@ class PropertyImage extends Model
      * @var bool
      */
     public $incrementing = true;
-    /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
-    public $timestamps = false;
     protected $table = 'property_images';
     /**
      * The primary key associated with the table.
@@ -59,6 +61,24 @@ class PropertyImage extends Model
     protected $fillable = [
         'property_id',
         'path',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = ['deleted_at'];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'deleted_at' => 'timestamp',
+        'created_at' => 'timestamp',
+        'updated_at' => 'timestamp',
     ];
 
     /**

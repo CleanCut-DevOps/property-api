@@ -25,6 +25,7 @@ return new class extends Migration
             $table->unsignedDecimal('sq_ft',12, 2)->nullable();
             $table->enum('type', ['Single-family home', 'Duplex', 'Triplex', 'Fourplex', 'Condominium', 'Townhouse', 'Apartment building', 'Co-op', 'Manufactured home', 'Tiny home', 'Office building', 'Warehouse']);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
