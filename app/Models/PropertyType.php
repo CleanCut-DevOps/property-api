@@ -22,9 +22,9 @@ use Illuminate\Notifications\Notifiable;
  * @property string $label
  * @property float $bedroom_price
  * @property float $bathroom_price
- * @property float $toilet_price
  * @property float $kitchen_price
  * @property float $living_room_price
+ * @property float $utility_room_price
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
@@ -98,9 +98,9 @@ class PropertyType extends Model
         'label',
         'bedroom_price',
         'bathroom_price',
-        'toilet_price',
         'kitchen_price',
         'living_room_price',
+        'utility_room_price',
     ];
 
     /**

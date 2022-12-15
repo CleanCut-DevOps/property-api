@@ -42,18 +42,18 @@ class PropertyAddress extends Model
     use HasFactory, Notifiable, UUID;
 
     /**
-     * The update timestamp associated with the model.
-     *
-     * @var string
-     */
-    const UPDATED_AT = 'updated_date';
-
-    /**
      * Indicates if the model's ID is auto-incrementing.
      *
      * @var bool
      */
     public $incrementing = false;
+
+    /**
+     * Indicates if the model should be timestamped.
+     *
+     * @var bool
+     */
+    public $timestamps = false;
 
     /**
      * The table associated with the model.
@@ -82,6 +82,7 @@ class PropertyAddress extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'property_id',
         'line_1',
         'line_2',
         'city',
@@ -102,6 +103,17 @@ class PropertyAddress extends Model
      * @var array<string, string>
      */
     protected $casts = ['updated_at' => 'timestamp'];
+
+
+
+    public static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            $model->updated_at = $model->freshTimestamp();
+        });
+    }
 
     /**
      * Get the property that owns the rooms.
