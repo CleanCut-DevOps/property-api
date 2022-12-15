@@ -40,7 +40,7 @@ class ValidateUpdate
             return response()->json([
                 "type" => "Invalid request",
                 "message" => "Request data is invalid",
-                "errors" => $e->errors()->messages()
+                "errors" => $e->errors()
             ], 422);
         }
     }
