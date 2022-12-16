@@ -4,8 +4,8 @@ namespace App\Models;
 
 use App\Traits\UUID;
 use Eloquent;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,17 +22,16 @@ use Illuminate\Notifications\Notifiable;
  *
  * @property string $id
  * @property string $user_id
+ * @property string $type_id
  * @property string $name
- * @property string $address
- * @property int $bedrooms
- * @property int $bathrooms
  * @property string $description
- * @property string $price
- * @property string|null $sq_ft
- * @property string $type
  * @property int|null $created_at
  * @property int|null $updated_at
- * @property Collection|PropertyImage[] $images
+ * @property int|null $deleted_at
+ * @property-read Collection $address
+ * @property-read Collection|PropertyImage[] $images
+ * @property-read PropertyRooms|null $rooms
+ * @property-read PropertyType $type
  * @property-read int|null $images_count
  * @property-read DatabaseNotificationCollection|DatabaseNotification[] $notifications
  * @property-read int|null $notifications_count
@@ -40,29 +39,23 @@ use Illuminate\Notifications\Notifiable;
  * @method static EloquentBuilder|Property newQuery()
  * @method static QueryBuilder|Property onlyTrashed()
  * @method static EloquentBuilder|Property query()
- * @method static EloquentBuilder|Property whereAddress($value)
- * @method static EloquentBuilder|Property whereBathrooms($value)
- * @method static EloquentBuilder|Property whereBedrooms($value)
  * @method static EloquentBuilder|Property whereCreatedAt($value)
+ * @method static EloquentBuilder|Property whereDeletedAt($value)
  * @method static EloquentBuilder|Property whereDescription($value)
  * @method static EloquentBuilder|Property whereId($value)
  * @method static EloquentBuilder|Property whereName($value)
- * @method static EloquentBuilder|Property wherePrice($value)
- * @method static EloquentBuilder|Property whereSqFt($value)
- * @method static EloquentBuilder|Property whereType($value)
+ * @method static EloquentBuilder|Property whereTypeId($value)
  * @method static EloquentBuilder|Property whereUpdatedAt($value)
  * @method static EloquentBuilder|Property whereUserId($value)
  * @method static QueryBuilder|Property withTrashed()
  * @method static QueryBuilder|Property withoutTrashed()
  * @mixin Eloquent
- * @property int|null $deleted_at
- * @method static EloquentBuilder|Property whereDeletedAt($value)
  */
 class Property extends Model
 {
     use HasFactory, SoftDeletes, Notifiable, UUID;
 
-    public $appends = ['images'];
+    public $appends = ['images', 'rooms', 'address', 'type'];
 
     /**
      * Indicates if the model's ID is auto-incrementing.
@@ -113,7 +106,7 @@ class Property extends Model
      *
      * @var array<int, string>
      */
-    protected $hidden = ['deleted_at'];
+    protected $hidden = ['deleted_at', 'type_id'];
 
     /**
      * The attributes that should be cast.
@@ -167,12 +160,46 @@ class Property extends Model
     }
 
     /**
+     * Get the property's type.
+     *
+     * @return string
+     */
+    public function getTypeAttribute(): string
+    {
+        return $this->type()->first()->label;
+    }
+
+    /**
+     * Get the property's rooms.
+     *
+     * @return Model
+     */
+    public function getRoomsAttribute(): Model
+    {
+        return $this->rooms()->first();
+    }
+
+    /**
+     * Get the property's address.
+     *
+     * @return Model
+     */
+    public function getAddressAttribute(): Model
+    {
+        return $this->address()->first();
+    }
+
+    /**
      * Get the property's images.
      *
-     * @return Collection
+     * @return \Illuminate\Support\Collection
      */
-    public function getImagesAttribute(): Collection
+    public function getImagesAttribute(): \Illuminate\Support\Collection
     {
-        return $this->images()->get();
+        $raw = $this->images()->get();
+
+        return $raw->map(function ($image) {
+            return $image->url;
+        });
     }
 }

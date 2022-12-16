@@ -18,9 +18,9 @@ return new class extends Migration
             $table->string('label');
             $table->double('bedroom_price');
             $table->double('bathroom_price');
-            $table->double('toilet_price');
             $table->double('kitchen_price');
             $table->double('living_room_price');
+            $table->double('utility_room_price');
             $table->timestamps();
             $table->softDeletes();
         });
