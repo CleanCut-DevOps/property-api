@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('properties', function (Blueprint $table) {
+        Schema::create('property', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('user_id');
             $table->uuid('type_id');
@@ -21,8 +21,6 @@ return new class extends Migration
             $table->text('description');
             $table->timestamps();
             $table->softDeletes();
-
-            $table->foreign('type_id')->references('id')->on('types');
         });
     }
 
@@ -33,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('properties');
+        Schema::dropIfExists('property');
     }
 };
