@@ -2,15 +2,13 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\PropertyType;
 use Closure;
-use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ValidateCreate
 {
@@ -48,12 +46,14 @@ class ValidateCreate
             ]);
 
             return $next($request);
-        } catch (Exception $e) {
+        } catch (ValidationException $e) {
+            $errors = array_merge(...array_values($e->errors()));
+
             return response()->json([
                 "type" => "Invalid request",
-                "message" => "Request data is invalid",
-                "errors" => $e->errors()
-            ], 422);
+                "message" => $e->getMessage(),
+                "errors" => $errors
+            ], 400);
         }
     }
 }

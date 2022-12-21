@@ -10,7 +10,6 @@ use App\Models\Property;
 use App\Models\PropertyAddress;
 use App\Models\PropertyImage;
 use App\Models\PropertyRooms;
-use App\Models\PropertyType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -56,10 +55,10 @@ class PropertyController extends Controller
         $property = Property::whereId($id)->first();
 
         return response()->json([
-            "status" => "Successful request",
+            "type" => "Successful request",
             "message" => "User property retrieved successfully",
             "property" => $property,
-        ], 201);
+        ], 200);
     }
 
     /**
@@ -70,7 +69,7 @@ class PropertyController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $type = PropertyType::whereLabel($request->type)->first();
+        $type = $request->type;
 
         $request['type_id'] = $type->id;
 
@@ -121,9 +120,6 @@ class PropertyController extends Controller
 
         $property->update($request->all());
 
-
-
-
         if (!empty($request->address)) {
             $address = PropertyAddress::wherePropertyId($id);
 
@@ -163,7 +159,7 @@ class PropertyController extends Controller
             "type" => "Successful request",
             "message" => "User property updated successfully",
             "property" => $property->refresh()
-        ], 201);
+        ], 200);
     }
 
     /**
@@ -182,6 +178,6 @@ class PropertyController extends Controller
         return response()->json([
             "type" => "Successful request",
             "message" => "User property deleted successfully",
-        ], 201);
+        ], 200);
     }
 }
