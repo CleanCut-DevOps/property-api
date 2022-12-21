@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('postal_code');
             $table->timestamp('updated_at');
 
-            $table->foreign('property_id')->references('id')->on('properties')->onDelete('cascade');
+            $table->foreign('property_id')->references('id')->on('property')->onDelete('cascade');
         });
     }
 

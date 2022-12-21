@@ -14,9 +14,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('images', function (Blueprint $table) {
-            $table->id();
             $table->uuid('property_id');
             $table->string('url');
+
+            $table->foreign('property_id')->references('id')->on('property')->onDelete('cascade');
         });
     }
 
