@@ -4,11 +4,10 @@ namespace App\Models;
 
 use App\Traits\UUID;
 use Eloquent;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -28,10 +27,10 @@ use Illuminate\Notifications\Notifiable;
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
- * @property-read Collection $address
+ * @property-read Model $address
  * @property-read Collection|PropertyImage[] $images
  * @property-read PropertyRooms|null $rooms
- * @property-read PropertyType $type
+ * @property-read string $type
  * @property-read int|null $images_count
  * @property-read DatabaseNotificationCollection|DatabaseNotification[] $notifications
  * @property-read int|null $notifications_count
@@ -76,7 +75,7 @@ class Property extends Model
      *
      * @var string
      */
-    protected $table = 'properties';
+    protected $table = 'property';
     /**
      * The primary key associated with the table.
      *
@@ -120,53 +119,13 @@ class Property extends Model
     ];
 
     /**
-     * Get the type that owns the property.
-     *
-     * @return BelongsTo
-     */
-    public function type(): BelongsTo
-    {
-        return $this->belongsTo(PropertyType::class, 'type_id', 'id');
-    }
-
-    /**
-     * Get the property that owns the image.
-     *
-     * @return HasOne
-     */
-    public function rooms(): HasOne
-    {
-        return $this->hasOne(PropertyRooms::class, 'property_id', 'id');
-    }
-
-    /**
-     * Get the property that owns the image.
-     *
-     * @return HasOne
-     */
-    public function address(): HasOne
-    {
-        return $this->hasOne(PropertyAddress::class, 'property_id', 'id');
-    }
-
-    /**
-     * Get the property that owns the image.
-     *
-     * @return HasMany
-     */
-    public function images(): HasMany
-    {
-        return $this->hasMany(PropertyImage::class, 'property_id', 'id');
-    }
-
-    /**
      * Get the property's type.
      *
      * @return string
      */
     public function getTypeAttribute(): string
     {
-        return $this->type()->first()->label;
+        return $this->type;
     }
 
     /**
@@ -180,6 +139,16 @@ class Property extends Model
     }
 
     /**
+     * Get the property that owns the image.
+     *
+     * @return HasOne
+     */
+    public function rooms(): HasOne
+    {
+        return $this->hasOne(PropertyRooms::class, 'property_id', 'id');
+    }
+
+    /**
      * Get the property's address.
      *
      * @return Model
@@ -187,6 +156,16 @@ class Property extends Model
     public function getAddressAttribute(): Model
     {
         return $this->address()->first();
+    }
+
+    /**
+     * Get the property that owns the image.
+     *
+     * @return HasOne
+     */
+    public function address(): HasOne
+    {
+        return $this->hasOne(PropertyAddress::class, 'property_id', 'id');
     }
 
     /**
@@ -201,5 +180,15 @@ class Property extends Model
         return $raw->map(function ($image) {
             return $image->url;
         });
+    }
+
+    /**
+     * Get the property that owns the image.
+     *
+     * @return HasMany
+     */
+    public function images(): HasMany
+    {
+        return $this->hasMany(PropertyImage::class, 'property_id', 'id');
     }
 }

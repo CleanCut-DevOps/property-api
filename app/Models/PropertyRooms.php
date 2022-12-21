@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\UUID;
+use Eloquent;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,11 +16,8 @@ use Illuminate\Notifications\Notifiable;
  * App\Models\PropertyRooms
  *
  * @property string $property_id
- * @property int $bedrooms
- * @property int $bathrooms
- * @property int $kitchens
- * @property int $living_rooms
- * @property int $utility_rooms
+ * @property string $room_id
+ * @property int $quantity
  * @property int $updated_at
  * @property-read DatabaseNotificationCollection|DatabaseNotification[] $notifications
  * @property-read int|null $notifications_count
@@ -27,18 +25,17 @@ use Illuminate\Notifications\Notifiable;
  * @method static EloquentBuilder|PropertyRooms newModelQuery()
  * @method static EloquentBuilder|PropertyRooms newQuery()
  * @method static EloquentBuilder|PropertyRooms query()
- * @method static EloquentBuilder|PropertyRooms whereBathrooms($value)
- * @method static EloquentBuilder|PropertyRooms whereBedrooms($value)
- * @method static EloquentBuilder|PropertyRooms whereKitchens($value)
- * @method static EloquentBuilder|PropertyRooms whereLivingRooms($value)
  * @method static EloquentBuilder|PropertyRooms wherePropertyId($value)
+ * @method static EloquentBuilder|PropertyRooms whereQuantity($value)
+ * @method static EloquentBuilder|PropertyRooms whereRoomId($value)
  * @method static EloquentBuilder|PropertyRooms whereUpdatedAt($value)
- * @method static EloquentBuilder|PropertyRooms whereUtilityRooms($value)
- * @mixin \Eloquent
+ * @mixin Eloquent
  */
 class PropertyRooms extends Model
 {
     use HasFactory, Notifiable, UUID;
+
+    const CREATED_AT = null;
 
     /**
      * Indicates if the model's ID is auto-incrementing.
@@ -48,11 +45,11 @@ class PropertyRooms extends Model
     public $incrementing = false;
 
     /**
-    * Indicates if the model should be timestamped.
-    *
-    * @var bool
-    */
-    public $timestamps = [ "updated_at" ];
+     * Indicates if the model should be timestamped.
+     *
+     * @var bool
+     */
+    public $timestamps = true;
 
     /**
      * The table associated with the model.
@@ -66,7 +63,7 @@ class PropertyRooms extends Model
      *
      * @var string
      */
-    protected $primaryKey = 'property_id';
+    protected $primaryKey = null;
 
     /**
      * The data type of the ID.
@@ -82,11 +79,8 @@ class PropertyRooms extends Model
      */
     protected $fillable = [
         'property_id',
-        'bedrooms',
-        'bathrooms',
-        'kitchens',
-        'living_rooms',
-        'utility_rooms'
+        'room_id',
+        'quantity'
     ];
 
     /**

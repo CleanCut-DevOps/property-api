@@ -41,6 +41,8 @@ class PropertyAddress extends Model
 {
     use HasFactory, Notifiable, UUID;
 
+    const CREATED_AT = null;
+
     /**
      * Indicates if the model's ID is auto-incrementing.
      *
@@ -53,7 +55,7 @@ class PropertyAddress extends Model
      *
      * @var bool
      */
-    public $timestamps = [ "updated_at" ];
+    public $timestamps = true;
 
     /**
      * The table associated with the model.
