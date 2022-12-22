@@ -15,14 +15,14 @@ return new class extends Migration
     {
         Schema::create('addresses', function (Blueprint $table) {
             $table->uuid('property_id')->primary();
-            $table->text('line 1');
-            $table->text('line 2')->nullable();
+            $table->text('line_1');
+            $table->text('line_2')->nullable();
             $table->string('city');
             $table->string('state')->nullable();
             $table->string('postal_code');
             $table->timestamp('updated_at');
 
-            $table->foreign('property_id')->references('id')->on('properties')->onDelete('cascade');
+            $table->foreign('property_id')->references('id')->on('property')->onDelete('cascade');
         });
     }
 

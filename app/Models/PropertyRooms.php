@@ -3,21 +3,39 @@
 namespace App\Models;
 
 use App\Traits\UUID;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * App\Models\PropertyRooms
+ *
+ * @property string $property_id
+ * @property string $room_id
+ * @property int $quantity
+ * @property int $updated_at
+ * @property-read DatabaseNotificationCollection|DatabaseNotification[] $notifications
+ * @property-read int|null $notifications_count
+ * @property-read Property $property
+ * @method static EloquentBuilder|PropertyRooms newModelQuery()
+ * @method static EloquentBuilder|PropertyRooms newQuery()
+ * @method static EloquentBuilder|PropertyRooms query()
+ * @method static EloquentBuilder|PropertyRooms wherePropertyId($value)
+ * @method static EloquentBuilder|PropertyRooms whereQuantity($value)
+ * @method static EloquentBuilder|PropertyRooms whereRoomId($value)
+ * @method static EloquentBuilder|PropertyRooms whereUpdatedAt($value)
+ * @mixin Eloquent
+ */
 class PropertyRooms extends Model
 {
-    use HasFactory, Notifiable, UUID;
+    use HasFactory, Notifiable;
 
-    /**
-     * The update timestamp associated with the model.
-     *
-     * @var string
-     */
-    const UPDATED_AT = 'updated_date';
+    const CREATED_AT = null;
 
     /**
      * Indicates if the model's ID is auto-incrementing.
@@ -27,18 +45,18 @@ class PropertyRooms extends Model
     public $incrementing = false;
 
     /**
+     * Indicates if the model should be timestamped.
+     *
+     * @var bool
+     */
+    public $timestamps = true;
+
+    /**
      * The table associated with the model.
      *
      * @var string
      */
     protected $table = 'rooms';
-
-    /**
-     * The primary key associated with the table.
-     *
-     * @var string
-     */
-    protected $primaryKey = 'property_id';
 
     /**
      * The data type of the ID.
@@ -53,11 +71,9 @@ class PropertyRooms extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'bedrooms',
-        'bathrooms',
-        'kitchens',
-        'living_rooms',
-        'utility_rooms'
+        'property_id',
+        'room_id',
+        'quantity'
     ];
 
     /**
