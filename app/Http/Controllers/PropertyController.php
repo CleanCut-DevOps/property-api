@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Middleware\BelongsToAccount;
-use App\Http\Middleware\ValidateCreate;
+use App\Http\Middleware\ValidateCreateAndUpdate;
 use App\Http\Middleware\ValidateJWT;
-use App\Http\Middleware\ValidateUpdate;
 use App\Models\Property;
 use App\Models\PropertyAddress;
 use App\Models\PropertyImage;
@@ -19,8 +18,7 @@ class PropertyController extends Controller
     public function __construct()
     {
         $this->middleware(ValidateJWT::class);
-        $this->middleware(ValidateCreate::class)->only("store");
-        $this->middleware(ValidateUpdate::class)->only("update");
+        $this->middleware(ValidateCreateAndUpdate::class)->only(["store", "update"]);
         $this->middleware(BelongsToAccount::class)->only(["show", "update", "destroy"]);
     }
 
@@ -81,6 +79,13 @@ class PropertyController extends Controller
         ]);
 
         foreach ($request->rooms as $rawRoomData) {
+            if ($rawRoomData['quantity'] < 1) {
+                PropertyRooms::create([
+                    "property_id" => $property->id,
+                    "room_id" => $rawRoomData['id'],
+                    "quantity" => 0
+                ]);
+            }
             PropertyRooms::create([
                 "property_id" => $property->id,
                 "room_id" => $rawRoomData['id'],
@@ -106,16 +111,73 @@ class PropertyController extends Controller
      * Update the specified resource in storage.
      *
      * @param Request $request
-     * @param  string $id
+     * @param string $id
      * @return JsonResponse
      */
     public function update(Request $request, string $id): JsonResponse
     {
         $property = Property::whereId($id)->first();
+        $propertyAddress = $property->address;
+        $propertyImages = $property->images;
+
+        if ($property->type != $request->type) PropertyRooms::wherePropertyId($id)->delete();
 
         $property->update($request->all());
 
-        $property->address->update($request->address);
+        $propertyAddress->update($request->address);
+
+        foreach ($request->rooms as $rawRoomData) {
+            $selectedPropertyRoom = PropertyRooms::wherePropertyId($id)->whereRoomId($rawRoomData['id']);
+
+            if ($selectedPropertyRoom->exists()) {
+                if ($rawRoomData['quantity'] < 0) {
+                    $selectedPropertyRoom->update([
+                        "quantity" => 0,
+                    ]);
+
+                } else {
+                    $selectedPropertyRoom->update([
+                        "quantity" => $rawRoomData['quantity'],
+                    ]);
+
+                }
+
+            } else {
+                if ($rawRoomData['quantity'] < 0) {
+                    PropertyRooms::create([
+                        "property_id" => $property->id,
+                        "room_id" => $rawRoomData['id'],
+                        "quantity" => 0,
+                    ]);
+
+                } else {
+                    PropertyRooms::create([
+                        "property_id" => $property->id,
+                        "room_id" => $rawRoomData['id'],
+                        "quantity" => $rawRoomData['quantity'],
+                    ]);
+
+                }
+
+            }
+        }
+
+        foreach ($request->images as $imageURL) {
+            $selectedPropertyImage = PropertyImage::wherePropertyId($id)->whereUrl($imageURL);
+
+            if (!$selectedPropertyImage->exists()) {
+                PropertyImage::create([
+                    "property_id" => $property->id,
+                    "url" => $imageURL,
+                ]);
+            }
+        }
+
+        foreach ($propertyImages as $propertyImage) {
+            if (!in_array($propertyImage, $request->images)) {
+                PropertyImage::wherePropertyId($id)->whereUrl($propertyImage)->delete();
+            }
+        }
 
         return response()->json([
             "type" => "Successful request",
@@ -127,8 +189,8 @@ class PropertyController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  Request  $request
-     * @param  string $id
+     * @param Request $request
+     * @param string $id
      * @return JsonResponse
      */
     public function destroy(Request $request, string $id): JsonResponse
