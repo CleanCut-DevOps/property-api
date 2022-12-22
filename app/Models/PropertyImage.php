@@ -40,13 +40,6 @@ class PropertyImage extends Model
     protected $table = 'images';
 
     /**
-     * The primary key for the model.
-     *
-     * @var string
-     */
-    protected $primaryKey = null;
-
-    /**
      * The attributes that should be hidden for serialization.
      *
      * @var array<int, string>
