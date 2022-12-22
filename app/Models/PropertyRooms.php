@@ -33,7 +33,7 @@ use Illuminate\Notifications\Notifiable;
  */
 class PropertyRooms extends Model
 {
-    use HasFactory, Notifiable, UUID;
+    use HasFactory, Notifiable;
 
     const CREATED_AT = null;
 
@@ -57,13 +57,6 @@ class PropertyRooms extends Model
      * @var string
      */
     protected $table = 'rooms';
-
-    /**
-     * The primary key associated with the table.
-     *
-     * @var string
-     */
-    protected $primaryKey = null;
 
     /**
      * The data type of the ID.

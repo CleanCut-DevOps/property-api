@@ -54,7 +54,7 @@ class Property extends Model
 {
     use HasFactory, SoftDeletes, Notifiable, UUID;
 
-    public $appends = ['images', 'rooms', 'address', 'type'];
+    public $appends = ['type', 'address', 'rooms', 'images'];
 
     /**
      * Indicates if the model's ID is auto-incrementing.
@@ -125,27 +125,27 @@ class Property extends Model
      */
     public function getTypeAttribute(): string
     {
-        return $this->type;
+        return $this->type_id;
     }
 
     /**
      * Get the property's rooms.
      *
-     * @return Model
+     * @return Collection
      */
-    public function getRoomsAttribute(): Model
+    public function getRoomsAttribute(): Collection
     {
-        return $this->rooms()->first();
+        return $this->rooms()->get();
     }
 
     /**
      * Get the property that owns the image.
      *
-     * @return HasOne
+     * @return HasMany
      */
-    public function rooms(): HasOne
+    public function rooms(): HasMany
     {
-        return $this->hasOne(PropertyRooms::class, 'property_id', 'id');
+        return $this->hasMany(PropertyRooms::class, 'property_id', 'id');
     }
 
     /**
@@ -177,9 +177,7 @@ class Property extends Model
     {
         $raw = $this->images()->get();
 
-        return $raw->map(function ($image) {
-            return $image->url;
-        });
+        return $raw->map(fn ($image) => $image->url);
     }
 
     /**
