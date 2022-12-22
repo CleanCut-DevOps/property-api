@@ -8,11 +8,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
-class ValidateCreate
+class ValidateCreateAndUpdate
 {
     /**
      * Handle an incoming request.
@@ -30,7 +28,7 @@ class ValidateCreate
 
             $response = Http::accept('application/json')->post("$serviceAPI/api/validate/property", [
                 'type' => $request->type_id,
-                'rooms' => collect($request->rooms)->map(fn ($room) => $room["id"]),
+                'rooms' => collect($request->rooms)->map(fn($room) => $room["id"]),
             ]);
 
             if ($response->successful()) {
@@ -92,7 +90,7 @@ class ValidateCreate
         $request->validate([
             "rooms" => ['required', 'array'],
             "rooms.*.id" => ['required', 'string', 'max:255'],
-            "rooms.*.quantity" => ['required', 'integer', 'min:1'],
+            "rooms.*.quantity" => ['required', 'integer'],
         ], [
             "rooms.required" => "Property rooms are required",
             "rooms.array" => "Rooms must be an array",
