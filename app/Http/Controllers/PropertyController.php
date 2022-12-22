@@ -69,14 +69,10 @@ class PropertyController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $type = $request->type;
-
-        $request['type_id'] = $type->id;
-
-        $createdProperty = Property::create($request->all());
+        $property = Property::create($request->all());
 
         PropertyAddress::create([
-            "property_id" => $createdProperty->id,
+            "property_id" => $property->id,
             "line_1" => $request->address['line_1'],
             "line_2" => $request->address['line_2'],
             "city" => $request->address['city'],
@@ -84,26 +80,25 @@ class PropertyController extends Controller
             "postal_code" => $request->address['postal_code'],
         ]);
 
-        PropertyRooms::create([
-            "property_id" => $createdProperty->id,
-            "bedrooms" => $request->rooms['bedrooms'],
-            "bathrooms" => $request->rooms['bathrooms'],
-            "kitchens" => $request->rooms['kitchens'],
-            "living_rooms" => $request->rooms['living_rooms'],
-            "utility_rooms" => $request->rooms['utility_rooms'],
-        ]);
+        foreach ($request->rooms as $rawRoomData) {
+            PropertyRooms::create([
+                "property_id" => $property->id,
+                "room_id" => $rawRoomData['id'],
+                "quantity" => $rawRoomData['quantity'],
+            ]);
+        }
 
-        foreach ($request->images as $image) {
+        foreach ($request->images as $imageURL) {
             PropertyImage::create([
-                "property_id" => $createdProperty->id,
-                "url" => $image,
+                "property_id" => $property->id,
+                "url" => $imageURL,
             ]);
         }
 
         return response()->json([
             "type" => "Successful request",
             "message" => "User property created successfully",
-            "property" => $createdProperty->refresh(),
+            "property" => $property->refresh(),
         ], 201);
     }
 
@@ -120,40 +115,7 @@ class PropertyController extends Controller
 
         $property->update($request->all());
 
-        if (!empty($request->address)) {
-            $address = PropertyAddress::wherePropertyId($id);
-
-            $address->update($request->address);
-        }
-
-        if (!empty($request->rooms)) {
-            $rooms = PropertyRooms::wherePropertyId($id);
-
-            $rooms->update($request->rooms);
-        }
-
-        if (!empty($request->images)) {
-            $raw = $property->images()->get();
-
-            $imageURLs =  $raw->map(function ($image) { return $image->url; });
-
-            foreach ($request->images as $url) {
-                if (!$imageURLs->contains($url)) {
-                    PropertyImage::create([
-                        "property_id" => $id,
-                        "url" => $url
-                    ]);
-                }
-            }
-
-            foreach ($imageURLs as $url) {
-                if (!in_array($url, $request->images)) {
-                    $url = PropertyImage::wherePropertyId($id)->whereUrl($url)->first();
-
-                    $url->delete();
-                }
-            }
-        }
+        $property->address->update($request->address);
 
         return response()->json([
             "type" => "Successful request",
