@@ -16,6 +16,7 @@ use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
 
+
 /**
  * App\Models\Property
  *
@@ -29,11 +30,12 @@ use Illuminate\Notifications\Notifiable;
  * @property int|null $deleted_at
  * @property-read Model $address
  * @property-read Collection|PropertyImage[] $images
- * @property-read PropertyRooms|null $rooms
+ * @property-read Collection|PropertyRooms[] $rooms
  * @property-read string $type
  * @property-read int|null $images_count
  * @property-read DatabaseNotificationCollection|DatabaseNotification[] $notifications
  * @property-read int|null $notifications_count
+ * @property-read int|null $rooms_count
  * @method static EloquentBuilder|Property newModelQuery()
  * @method static EloquentBuilder|Property newQuery()
  * @method static QueryBuilder|Property onlyTrashed()
