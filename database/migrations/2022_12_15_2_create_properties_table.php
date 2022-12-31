@@ -15,10 +15,10 @@ return new class extends Migration
     {
         Schema::create('property', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('user_id');
-            $table->uuid('type_id');
-            $table->string('name');
-            $table->text('description');
+            $table->uuid('user_id')->nullable();
+            $table->uuid('type_id')->nullable();
+            $table->string('name')->default("My Property");
+            $table->text('description')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
