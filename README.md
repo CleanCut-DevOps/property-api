@@ -12,7 +12,7 @@ information to cleaning service providers to help them deliver their services.
 
 To get started, you'll need to have the following software installed on your local machine:
 
--   MySQL (locally or DBaaS)
+-   MySQL (local server or DBaaS)
 -   PHP 8
 -   Composer
 
@@ -21,17 +21,17 @@ Once you have MySQL, create a schema in the MySQL DB called `property`.
 Once you have PHP 8 and Composer installed, clone this repository to your local machine.
 
 ```bash
-git clone "https://github.com/CleanCut-DevOps/property-api.git"
+$ git clone "https://github.com/CleanCut-DevOps/property-api.git"
 ```
 
 Next, navigate to the root directory of the project and install the dependencies:
 
 ```bash
-cd property-api
+$ cd property-api
 
-composer update
+$ composer update
 
-composer install
+$ composer install
 ```
 
 Next, copy the `.env.example` file to `.env`.
@@ -42,25 +42,27 @@ Next, copy the `.env.example` file to `.env`.
 3. Generate a new laravel key.
 
 ```bash
-cp .env.example .env
+$ cp .env.example .env
 
-// Update the database credentials in the .env file
+# Update the database credentials in the .env file
 
-// Update the URLs of all other services
+# Update the URLs of all other services
 
-php artisan key:generate
+$ php artisan key:generate
+
+$ php artisan config:cache
 ```
 
-Next, run the database migration and seeders to create the tables and default services available in the database.
+Next, run the database migration to create the tables in the database.
 
 ```bash
-php artisan migrate:fresh --seed
+$ php artisan migrate:fresh
 ```
 
-Finally, run the application if you're using a local environment.
+Finally, start the development server.
 
 ```bash
-php artisan serve --port=8003
+$ php artisan serve --port=8003
 ```
 
 The application will now be running on http://localhost:8003.
