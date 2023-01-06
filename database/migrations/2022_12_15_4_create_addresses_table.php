@@ -15,11 +15,11 @@ return new class extends Migration
     {
         Schema::create('addresses', function (Blueprint $table) {
             $table->uuid('property_id')->primary();
-            $table->text('line_1');
+            $table->text('line_1')->nullable();
             $table->text('line_2')->nullable();
-            $table->string('city');
+            $table->string('city')->nullable();
             $table->string('state')->nullable();
-            $table->string('postal_code');
+            $table->string('postal_code')->nullable();
             $table->timestamp('updated_at');
 
             $table->foreign('property_id')->references('id')->on('property')->onDelete('cascade');
