@@ -24,25 +24,29 @@ class ValidateCreateAndUpdate
         try {
             $this->validateTypes($request);
 
-            $serviceAPI = config("env.SERVICE_API");
+            if (request('type_id') || count(request('rooms')) > 0) {
+                $servicesAPI = config("env.SERVICES_API");
 
-            $response = Http::accept('application/json')->post("$serviceAPI/api/validate/property", [
-                'type' => $request->type_id,
-                'rooms' => collect($request->rooms)->map(fn($room) => $room["id"]),
-            ]);
+                $response = Http::accept("application/json")->post("$servicesAPI/validate/property", [
+                    "type" => request('type_id'),
+                    "rooms" => collect(request('rooms'))->map(fn($room) => $room["id"]),
+                ]);
 
-            if ($response->successful()) {
-                return $next($request);
+                if ($response->successful()) {
+                    return $next($request);
+                } else {
+                    return response()->json($response->json(), 400);
+                }
             } else {
-                return response()->json($response->json(), 400);
+                return $next($request);
             }
         } catch (ValidationException $e) {
-            $errors = array_merge(...array_values($e->errors()));
+            $errors = collect($e->errors());
 
             return response()->json([
                 "type" => "Invalid request",
                 "message" => $e->getMessage(),
-                "errors" => $errors
+                "errors" => $errors->map(fn($error) => $error[0]),
             ], 400);
         }
     }
@@ -50,56 +54,50 @@ class ValidateCreateAndUpdate
     protected function validateTypes(Request $request): void
     {
         $request->validate([
-            "name" => ["required", "string", "max:255"],
-            "description" => ["required", "between:1,1200"],
-            "type_id" => ["required", "string"],
+            "icon" => ["nullable", "string", "max:255"],
+            "label" => ["nullable", "string", "max:255"],
+            "description" => ["nullable", "between:1,1200"],
+            "type_id" => ["nullable", "string", "max:255"],
         ], [
-            "name.required" => "Property name is required",
-            "name.string" => "Property name must be a string",
-            "name.max" => "Property name must be less than 255 characters",
-            "description.required" => "Property description is required",
+            "icon.string" => "The icon must be a string",
+            "icon.max" => "The icon must be less than 255 characters",
+            "label.string" => "Property label must be a string",
+            "label.max" => "Property label must be less than 255 characters",
             "description.between" => "Property description must be between 1 and 1200 characters",
-            "type_id.required" => "Property type is required",
             "type_id.string" => "Property type must be a string",
+            "type_id.max" => "Property type must be less than 255 characters",
         ]);
 
         $request->validate([
-            "address" => ['required', 'array'],
-            "address.line_1" => ['required', 'string', 'max:255'],
-            "address.line_2" => ['nullable', 'string', 'max:255'],
-            "address.city" => ['required', 'string', 'max:48'],
-            "address.state" => ['nullable', 'string', 'max:48'],
-            "address.postal_code" => ['required', 'numeric'],
+            "address" => ["nullable", "array"],
+            "address.line_1" => ["nullable", "string", "max:255"],
+            "address.line_2" => ["nullable", "string", "max:255"],
+            "address.city" => ["nullable", "string", "max:255"],
+            "address.state" => ["nullable", "string", "max:255"],
+            "address.zip" => ["nullable", "numeric"],
         ], [
-            "address.required" => "Property address is required",
             "address.array" => "Address must be an array",
-            "address.line_1.required" => "Address line 1 is required",
             "address.line_1.string" => "Address line 1 must be a string",
             "address.line_1.max" => "Address line 1 must be less than 255 characters",
             "address.line_2.string" => "Address line 2 must be a string",
             "address.line_2.max" => "Address line 2 must be less than 255 characters",
-            "address.city.required" => "Address city is required",
-            "address.city.string" => "Address city must be a string",
-            "address.city.max" => "Address city must be less than 48 characters",
-            "address.state.string" => "Address state must be a string",
-            "address.state.max" => "Address state must be less than 48 characters",
-            "address.postal_code.required" => "Address postal code is required",
-            "address.postal_code.numeric" => "Address postal code must be a number",
+            "address.city.string" => "City must be a string",
+            "address.city.max" => "City must be less than 255 characters",
+            "address.state.string" => "State must be a string",
+            "address.state.max" => "State must be less than 255 characters",
+            "address.zip.numeric" => "Zip code must be numeric",
         ]);
 
         $request->validate([
-            "rooms" => ['required', 'array'],
-            "rooms.*.id" => ['required', 'string', 'max:255'],
-            "rooms.*.quantity" => ['required', 'integer'],
+            "rooms" => ["nullable", "array"],
+            "rooms.*.id" => ["nullable", "string", "max:255"],
+            "rooms.*.quantity" => ["nullable", "integer", 'min:0'],
         ], [
-            "rooms.required" => "Property rooms are required",
-            "rooms.array" => "Rooms must be an array",
-            "rooms.*.id.required" => "Room id is required",
+            "rooms.array" => "Rooms attribute must be an array",
             "rooms.*.id.string" => "Room id must be a string",
             "rooms.*.id.max" => "Room id must be less than 255 characters",
-            "rooms.*.quantity.required" => "Room quantity is required",
             "rooms.*.quantity.integer" => "Room quantity must be an integer",
-            "rooms.*.quantity.min" => "Room quantity must be at least 1",
+            "rooms.*.quantity.min" => "Room quantity must be greater than or equal to 0",
         ]);
 
         $request->validate([

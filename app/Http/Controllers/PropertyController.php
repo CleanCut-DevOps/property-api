@@ -11,6 +11,7 @@ use App\Models\PropertyImage;
 use App\Models\PropertyRooms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class PropertyController extends Controller
 {
@@ -18,7 +19,7 @@ class PropertyController extends Controller
     public function __construct()
     {
         $this->middleware(ValidateJWT::class);
-        $this->middleware(ValidateCreateAndUpdate::class)->only(["store", "update"]);
+        $this->middleware(ValidateCreateAndUpdate::class)->only(['store', 'update']);
         $this->middleware(BelongsToAccount::class)->only(["show", "update", "destroy"]);
     }
 
@@ -30,7 +31,7 @@ class PropertyController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $user_id = $request->user_id;
+        $user_id = request('user_id');
 
         $properties = Property::whereUserId($user_id)->get();
 
@@ -67,42 +68,43 @@ class PropertyController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $emoji_arr = ['🪟','🏚️','🛖','🎈', '🏠', '🏡', '🏢', '🏣', '🏤', '🏥', '🏦', '🏨', '🏩', '🏪', '🏫', '🏬', '🏭', '🏯', '🏰', '💒', '🗼', '🗽', '⛪', '🕌', '🕍', '⛩️'];
+
+        if (!request('icon')) $request['icon'] = $emoji_arr[array_rand($emoji_arr)];
+
         $property = Property::create($request->all());
 
-        PropertyAddress::create([
-            "property_id" => $property->id,
-            "line_1" => $request->address['line_1'],
-            "line_2" => $request->address['line_2'],
-            "city" => $request->address['city'],
-            "state" => $request->address['state'],
-            "postal_code" => $request->address['postal_code'],
-        ]);
-
-        foreach ($request->rooms as $rawRoomData) {
-            if ($rawRoomData['quantity'] < 1) {
-                PropertyRooms::create([
-                    "property_id" => $property->id,
-                    "room_id" => $rawRoomData['id'],
-                    "quantity" => 0
-                ]);
-            }
-            PropertyRooms::create([
-                "property_id" => $property->id,
-                "room_id" => $rawRoomData['id'],
-                "quantity" => $rawRoomData['quantity'],
+        if (!request('address')) {
+            PropertyAddress::create(["property_id" => $property->id]);
+        } else {
+            PropertyAddress::create([
+                ...request("address"),
+                "property_id" => $property->id
             ]);
         }
 
-        foreach ($request->images as $imageURL) {
-            PropertyImage::create([
-                "property_id" => $property->id,
-                "url" => $imageURL,
-            ]);
+        if (count(request('images')) > 0) {
+            foreach(request('images') as $imageURL) {
+                PropertyImage::create([
+                    "property_id" => $property->id,
+                    "url" => $imageURL
+                ]);
+            }
+        }
+
+        if (count(request('rooms')) > 0) {
+            foreach(request('rooms') as $room) {
+                PropertyRooms::create([
+                    "property_id" => $property->id,
+                    "room_id" => $room["id"],
+                    "quantity" => $room["quantity"]
+                ]);
+            }
         }
 
         return response()->json([
             "type" => "Successful request",
-            "message" => "User property created successfully",
+            "message" => "Property created successfully",
             "property" => $property->refresh(),
         ], 201);
     }
