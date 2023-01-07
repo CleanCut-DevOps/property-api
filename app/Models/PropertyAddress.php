@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Traits\UUID;
 use Eloquent;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,25 +16,25 @@ use Illuminate\Notifications\Notifiable;
  * App\Models\PropertyAddress
  *
  * @property string $property_id
- * @property string $line_1
+ * @property string|null $line_1
  * @property string|null $line_2
- * @property string $city
+ * @property string|null $city
  * @property string|null $state
- * @property string $postal_code
+ * @property string|null $postal_code
  * @property int $updated_at
  * @property-read DatabaseNotificationCollection|DatabaseNotification[] $notifications
  * @property-read int|null $notifications_count
  * @property-read Property $property
- * @method static EloquentBuilder|PropertyAddress newModelQuery()
- * @method static EloquentBuilder|PropertyAddress newQuery()
- * @method static EloquentBuilder|PropertyAddress query()
- * @method static EloquentBuilder|PropertyAddress whereCity($value)
- * @method static EloquentBuilder|PropertyAddress whereLine1($value)
- * @method static EloquentBuilder|PropertyAddress whereLine2($value)
- * @method static EloquentBuilder|PropertyAddress wherePostalCode($value)
- * @method static EloquentBuilder|PropertyAddress wherePropertyId($value)
- * @method static EloquentBuilder|PropertyAddress whereState($value)
- * @method static EloquentBuilder|PropertyAddress whereUpdatedAt($value)
+ * @method static Builder|PropertyAddress newModelQuery()
+ * @method static Builder|PropertyAddress newQuery()
+ * @method static Builder|PropertyAddress query()
+ * @method static Builder|PropertyAddress whereCity($value)
+ * @method static Builder|PropertyAddress whereLine1($value)
+ * @method static Builder|PropertyAddress whereLine2($value)
+ * @method static Builder|PropertyAddress wherePostalCode($value)
+ * @method static Builder|PropertyAddress wherePropertyId($value)
+ * @method static Builder|PropertyAddress whereState($value)
+ * @method static Builder|PropertyAddress whereUpdatedAt($value)
  * @mixin Eloquent
  */
 class PropertyAddress extends Model
@@ -44,7 +44,7 @@ class PropertyAddress extends Model
     const CREATED_AT = null;
 
     /**
-     * Indicates if the model's ID is auto-incrementing.
+     * Indicates if the model"s ID is auto-incrementing.
      *
      * @var bool
      */
@@ -62,21 +62,21 @@ class PropertyAddress extends Model
      *
      * @var string
      */
-    protected $table = 'addresses';
+    protected $table = "addresses";
 
     /**
      * The primary key associated with the table.
      *
      * @var string
      */
-    protected $primaryKey = 'property_id';
+    protected $primaryKey = "property_id";
 
     /**
      * The data type of the ID.
      *
      * @var string
      */
-    protected $keyType = 'string';
+    protected $keyType = "string";
 
     /**
      * The attributes that are mass assignable.
@@ -84,12 +84,12 @@ class PropertyAddress extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'property_id',
-        'line_1',
-        'line_2',
-        'city',
-        'state',
-        'postal_code'
+        "property_id",
+        "line_1",
+        "line_2",
+        "city",
+        "state",
+        "zip"
     ];
 
     /**
@@ -97,14 +97,14 @@ class PropertyAddress extends Model
      *
      * @var array<int, string>
      */
-    protected $hidden = ['property_id'];
+    protected $hidden = ["property_id"];
 
     /**
      * The attributes that should be cast.
      *
      * @var array<string, string>
      */
-    protected $casts = ['updated_at' => 'timestamp'];
+    protected $casts = ["updated_at" => "timestamp"];
 
     /**
      * Get the property that owns the rooms.
@@ -113,6 +113,6 @@ class PropertyAddress extends Model
      */
     public function property(): BelongsTo
     {
-        return $this->belongsTo(Property::class, 'property_id', 'id');
+        return $this->belongsTo(Property::class, "property_id", "id");
     }
 }
