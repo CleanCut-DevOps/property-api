@@ -136,9 +136,9 @@ class Property extends Model
         $typeID = $this->type_id;
 
         if ($typeID) {
-            $serviceAPI = config("env.SERVICE_API");
+            $servicesAPI = config("env.SERVICES_API");
 
-            $response = Http::accept("application/json")->get("$serviceAPI/property/$typeID");
+            $response = Http::accept("application/json")->get("$servicesAPI/property/$typeID");
 
             if ($response->successful()) {
                 return $response["propertyType"];
@@ -159,11 +159,11 @@ class Property extends Model
         $rawRoomsData = $this->rooms()->get();
 
         if (count($rawRoomsData) > 0) {
-            $serviceAPI = config("env.SERVICE_API");
+            $servicesAPI = config("env.SERVICES_API");
 
             foreach ($rawRoomsData as $rawRoomData) {
                 $roomID = $rawRoomData->room_id;
-                $response = Http::accept("application/json")->get("$serviceAPI/room/$roomID");
+                $response = Http::accept("application/json")->get("$servicesAPI/room/$roomID");
                 if ($response->successful()) {
                     $rooms[] = $response["roomType"];
                 }
