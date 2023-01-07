@@ -165,7 +165,11 @@ class Property extends Model
                 $roomID = $rawRoomData->room_id;
                 $response = Http::accept("application/json")->get("$servicesAPI/room/$roomID");
                 if ($response->successful()) {
-                    $rooms[] = $response["roomType"];
+                    $rooms[] = [
+                        "type" => $response["roomType"],
+                        "quantity" => $rawRoomData->quantity,
+                        "updated_at" => $rawRoomData->updated_at,
+                    ];
                 }
             }
         }
