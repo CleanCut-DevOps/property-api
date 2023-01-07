@@ -15,23 +15,24 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
-
+use Illuminate\Support\Facades\Http;
 
 /**
  * App\Models\Property
  *
  * @property string $id
- * @property string $user_id
- * @property string $type_id
- * @property string $name
- * @property string $description
+ * @property string|null $user_id
+ * @property string|null $type_id
+ * @property string $icon
+ * @property string $label
+ * @property string|null $description
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
- * @property-read Model $address
+ * @property-read Model|null $address
  * @property-read Collection|PropertyImage[] $images
  * @property-read Collection|PropertyRooms[] $rooms
- * @property-read string $type
+ * @property-read Collection|null $type
  * @property-read int|null $images_count
  * @property-read DatabaseNotificationCollection|DatabaseNotification[] $notifications
  * @property-read int|null $notifications_count
@@ -43,8 +44,9 @@ use Illuminate\Notifications\Notifiable;
  * @method static EloquentBuilder|Property whereCreatedAt($value)
  * @method static EloquentBuilder|Property whereDeletedAt($value)
  * @method static EloquentBuilder|Property whereDescription($value)
+ * @method static EloquentBuilder|Property whereIcon($value)
  * @method static EloquentBuilder|Property whereId($value)
- * @method static EloquentBuilder|Property whereName($value)
+ * @method static EloquentBuilder|Property whereLabel($value)
  * @method static EloquentBuilder|Property whereTypeId($value)
  * @method static EloquentBuilder|Property whereUpdatedAt($value)
  * @method static EloquentBuilder|Property whereUserId($value)
@@ -56,10 +58,10 @@ class Property extends Model
 {
     use HasFactory, SoftDeletes, Notifiable, UUID;
 
-    public $appends = ['type', 'address', 'rooms', 'images'];
+    public $appends = ["type", "address", "rooms", "images"];
 
     /**
-     * Indicates if the model's ID is auto-incrementing.
+     * Indicates if the model"s ID is auto-incrementing.
      *
      * @var bool
      */
@@ -77,29 +79,33 @@ class Property extends Model
      *
      * @var string
      */
-    protected $table = 'property';
+    protected $table = "property";
+
     /**
      * The primary key associated with the table.
      *
      * @var string
      */
-    protected $primaryKey = 'id';
+    protected $primaryKey = "id";
+
     /**
      * The data type of the ID.
      *
      * @var string
      */
-    protected $keyType = 'string';
+    protected $keyType = "string";
+
     /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
     protected $fillable = [
-        'user_id',
-        'type_id',
-        'name',
-        'description',
+        "user_id",
+        "type_id",
+        "icon",
+        "label",
+        "description",
     ];
 
     /**
@@ -107,7 +113,7 @@ class Property extends Model
      *
      * @var array<int, string>
      */
-    protected $hidden = ['deleted_at', 'type_id'];
+    protected $hidden = ["deleted_at", "type_id"];
 
     /**
      * The attributes that should be cast.
@@ -115,29 +121,56 @@ class Property extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'deleted_at' => 'timestamp',
-        'created_at' => 'timestamp',
-        'updated_at' => 'timestamp',
+        "deleted_at" => "timestamp",
+        "created_at" => "timestamp",
+        "updated_at" => "timestamp",
     ];
 
     /**
-     * Get the property's type.
+     * Get the property"s type.
      *
-     * @return string
+     * @return Collection|null
      */
-    public function getTypeAttribute(): string
+    public function getTypeAttribute(): array|null
     {
-        return $this->type_id;
+        $typeID = $this->type_id;
+
+        if ($typeID) {
+            $serviceAPI = config("env.SERVICE_API");
+
+            $response = Http::accept("application/json")->get("$serviceAPI/property/$typeID");
+
+            if ($response->successful()) {
+                return $response["propertyType"];
+            } else {
+                return null;
+            }
+        } else return null;
     }
 
     /**
-     * Get the property's rooms.
+     * Get the property"s rooms.
      *
-     * @return Collection
+     * @return array|null
      */
-    public function getRoomsAttribute(): Collection
+    public function getRoomsAttribute(): array|null
     {
-        return $this->rooms()->get();
+        $rooms = [];
+        $rawRoomsData = $this->rooms()->get();
+
+        if (count($rawRoomsData) > 0) {
+            $serviceAPI = config("env.SERVICE_API");
+
+            foreach ($rawRoomsData as $rawRoomData) {
+                $roomID = $rawRoomData->room_id;
+                $response = Http::accept("application/json")->get("$serviceAPI/room/$roomID");
+                if ($response->successful()) {
+                    $rooms[] = $response["roomType"];
+                }
+            }
+        }
+
+        return $rooms;
     }
 
     /**
@@ -147,15 +180,15 @@ class Property extends Model
      */
     public function rooms(): HasMany
     {
-        return $this->hasMany(PropertyRooms::class, 'property_id', 'id');
+        return $this->hasMany(PropertyRooms::class, "property_id", "id");
     }
 
     /**
-     * Get the property's address.
+     * Get the property"s address.
      *
-     * @return Model
+     * @return Model|null
      */
-    public function getAddressAttribute(): Model
+    public function getAddressAttribute(): Model|null
     {
         return $this->address()->first();
     }
@@ -167,11 +200,11 @@ class Property extends Model
      */
     public function address(): HasOne
     {
-        return $this->hasOne(PropertyAddress::class, 'property_id', 'id');
+        return $this->hasOne(PropertyAddress::class, "property_id", "id");
     }
 
     /**
-     * Get the property's images.
+     * Get the property"s images.
      *
      * @return \Illuminate\Support\Collection
      */
@@ -179,7 +212,7 @@ class Property extends Model
     {
         $raw = $this->images()->get();
 
-        return $raw->map(fn ($image) => $image->url);
+        return $raw->map(fn($image) => $image->url);
     }
 
     /**
@@ -189,6 +222,6 @@ class Property extends Model
      */
     public function images(): HasMany
     {
-        return $this->hasMany(PropertyImage::class, 'property_id', 'id');
+        return $this->hasMany(PropertyImage::class, "property_id", "id");
     }
 }

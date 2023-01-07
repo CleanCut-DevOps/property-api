@@ -17,7 +17,8 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('user_id')->nullable();
             $table->uuid('type_id')->nullable();
-            $table->string('name')->default("My Property");
+            $table->string('icon', 48);
+            $table->string('label')->default("My Property");
             $table->text('description')->nullable();
             $table->timestamps();
             $table->softDeletes();
