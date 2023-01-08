@@ -20,7 +20,7 @@ use Illuminate\Notifications\Notifiable;
  * @property string|null $line_2
  * @property string|null $city
  * @property string|null $state
- * @property string|null $postal_code
+ * @property string|null $zip
  * @property int $updated_at
  * @property-read DatabaseNotificationCollection|DatabaseNotification[] $notifications
  * @property-read int|null $notifications_count
@@ -31,10 +31,10 @@ use Illuminate\Notifications\Notifiable;
  * @method static Builder|PropertyAddress whereCity($value)
  * @method static Builder|PropertyAddress whereLine1($value)
  * @method static Builder|PropertyAddress whereLine2($value)
- * @method static Builder|PropertyAddress wherePostalCode($value)
  * @method static Builder|PropertyAddress wherePropertyId($value)
  * @method static Builder|PropertyAddress whereState($value)
  * @method static Builder|PropertyAddress whereUpdatedAt($value)
+ * @method static Builder|PropertyAddress whereZip($value)
  * @mixin Eloquent
  */
 class PropertyAddress extends Model
