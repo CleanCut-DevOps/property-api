@@ -2,12 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Middleware\ValidateImageRequest;
 use App\Models\Property;
+use App\Models\PropertyImage;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ImageController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(ValidateImageRequest::class);
+    }
+
     /**
      * Store a newly created resource in storage.
      *
@@ -18,11 +27,27 @@ class ImageController extends Controller
     {
         $property = Property::whereId(request('id'))->first();
 
-        return response()->json([
-            "type" => "Successful request",
-            "message" => "Image added successfully to property",
-            "property" => $property,
-        ], 200);
+        try {
+            $uploadedFile = $request->file('file')->storeOnCloudinary('CleanCut/Property');
+
+            PropertyImage::create([
+                "public_id" => $uploadedFile->getPublicId(),
+                'property_id' => request('id'),
+                'url' => $uploadedFile->getSecurePath()
+            ]);
+
+            return response()->json([
+                "type" => "Successful request",
+                "message" => "Image added successfully to property",
+                "property" => $property->refresh(),
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "type" => "Bad Request",
+                "message" => "Image could not be added to property",
+                "error" => $e->getMessage(),
+            ], 400);
+        }
     }
 
     /**
@@ -35,10 +60,24 @@ class ImageController extends Controller
     {
         $property = Property::whereId(request('id'))->first();
 
-        return response()->json([
-            "type" => "Successful request",
-            "message" => "Image deleted successfully from property",
-            "property" => $property,
-        ], 200);
+        $imageModel = PropertyImage::wherePropertyId(request('id'))->whereUrl(request('url'));
+
+        try {
+            Cloudinary::destroy($imageModel->first()->public_id);
+
+            $imageModel->delete();
+
+            return response()->json([
+                "type" => "Successful request",
+                "message" => "Image deleted successfully from property",
+                "property" => $property->refresh()
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                "type" => "Bad Request",
+                "message" => "Image could not be deleted from property",
+                "error" => $e->getMessage(),
+            ], 400);
+        }
     }
 }
