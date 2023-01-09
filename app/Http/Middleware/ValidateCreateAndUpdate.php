@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class ValidateCreateAndUpdate
@@ -24,7 +25,7 @@ class ValidateCreateAndUpdate
         try {
             $this->validateTypes($request);
 
-            if (request('type_id') || count(request('rooms')) > 0) {
+            if (request('type_id') || count(request('rooms') ?? []) > 0) {
                 $servicesAPI = config("env.SERVICES_API");
 
                 $response = Http::accept("application/json")->post("$servicesAPI/validate/property", [
@@ -54,18 +55,20 @@ class ValidateCreateAndUpdate
     protected function validateTypes(Request $request): void
     {
         $request->validate([
-            "icon" => ["nullable", "string", "max:255"],
-            "label" => ["nullable", "string", "max:255"],
+            "icon" => ["string", "max:255", "min:1"],
+            "label" => ["string", "max:255"],
             "description" => ["nullable", "between:1,1200"],
-            "type_id" => ["nullable", "string", "max:255"],
+            "type_id" => ["nullable", "string", "max:255", Rule::requiredIf(count(request('rooms') ?? []) > 0)],
         ], [
             "icon.string" => "The icon must be a string",
             "icon.max" => "The icon must be less than 255 characters",
+            "icon.min" => "The icon must be at least 1 character",
             "label.string" => "Property label must be a string",
             "label.max" => "Property label must be less than 255 characters",
             "description.between" => "Property description must be between 1 and 1200 characters",
             "type_id.string" => "Property type must be a string",
             "type_id.max" => "Property type must be less than 255 characters",
+            "type_id.required" => "Property type is required when rooms are provided",
         ]);
 
         $request->validate([
@@ -90,19 +93,21 @@ class ValidateCreateAndUpdate
 
         $request->validate([
             "rooms" => ["nullable", "array"],
-            "rooms.*.id" => ["nullable", "string", "max:255"],
-            "rooms.*.quantity" => ["nullable", "integer", 'min:0'],
+            "rooms.*.id" => ["required", "string", "max:255"],
+            "rooms.*.quantity" => ["required", "integer", 'min:0'],
         ], [
             "rooms.array" => "Rooms attribute must be an array",
+            "rooms.*.id.required" => "Room id is required",
             "rooms.*.id.string" => "Room id must be a string",
             "rooms.*.id.max" => "Room id must be less than 255 characters",
+            "rooms.*.quantity.required" => "Room quantity is required",
             "rooms.*.quantity.integer" => "Room quantity must be an integer",
             "rooms.*.quantity.min" => "Room quantity must be greater than or equal to 0",
         ]);
 
         $request->validate([
             "images" => ["nullable", "array"],
-            "images.*" => ["nullable", "string", "max:2048"],
+            "images.*" => ["string", "max:2048"],
         ], [
             "images.array" => "Images must be an array",
             "images.*.string" => "Image must be a string",
