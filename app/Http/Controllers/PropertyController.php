@@ -11,7 +11,6 @@ use App\Models\PropertyImage;
 use App\Models\PropertyRooms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class PropertyController extends Controller
 {
@@ -68,7 +67,7 @@ class PropertyController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $emoji_arr = ['🪟','🏚️','🛖','🎈', '🏠', '🏡', '🏢', '🏣', '🏤', '🏥', '🏦', '🏨', '🏩', '🏪', '🏫', '🏬', '🏭', '🏯', '🏰', '💒', '🗼', '🗽', '⛪', '🕌', '🕍', '⛩️'];
+        $emoji_arr = ['🪟', '🏚️', '🛖', '🎈', '🏠', '🏡', '🏢', '🏣', '🏤', '🏥', '🏦', '🏨', '🏩', '🏪', '🏫', '🏬', '🏭', '🏯', '🏰', '💒', '🗼', '🗽', '⛪', '🕌', '🕍', '⛩️'];
 
         if (!request('icon')) $request['icon'] = $emoji_arr[array_rand($emoji_arr)];
 
@@ -83,8 +82,8 @@ class PropertyController extends Controller
             ]);
         }
 
-        if (count(request('images')) > 0) {
-            foreach(request('images') as $imageURL) {
+        if (count(request('images') ?? []) > 0) {
+            foreach (request('images') as $imageURL) {
                 PropertyImage::create([
                     "property_id" => $property->id,
                     "url" => $imageURL
@@ -92,8 +91,8 @@ class PropertyController extends Controller
             }
         }
 
-        if (count(request('rooms')) > 0) {
-            foreach(request('rooms') as $room) {
+        if (count(request('rooms') ?? []) > 0) {
+            foreach (request('rooms') as $room) {
                 PropertyRooms::create([
                     "property_id" => $property->id,
                     "room_id" => $room["id"],
@@ -119,65 +118,62 @@ class PropertyController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         $property = Property::whereId($id)->first();
-        $propertyAddress = $property->address;
-        $propertyImages = $property->images;
+        $address = PropertyAddress::wherePropertyId($id)->first();
+        $images = PropertyImage::wherePropertyId($id);
+        $rooms = PropertyRooms::wherePropertyId($id)->get();
 
-        if ($property->type != $request->type) PropertyRooms::wherePropertyId($id)->delete();
+        $addressData = request('address');
+        $roomsData = collect(request('rooms'));
 
-        $property->update($request->all());
+        if (request('icon') !== $property->icon) $property->icon = request('icon');
+        if (request('label') !== $property->label) $property->label = request('label');
+        if (request('type_id') !== $property->type_id) $property->type_id = request('type_id');
+        if (request('description') !== $property->description) $property->description = request('description');
 
-        $propertyAddress->update($request->address);
+        $property->save();
 
-        foreach ($request->rooms as $rawRoomData) {
-            $selectedPropertyRoom = PropertyRooms::wherePropertyId($id)->whereRoomId($rawRoomData['id']);
+        if ($addressData["line_1"] !== $address->line_1) $address->line_1 = $addressData["line_1"];
+        if ($addressData["line_2"] !== $address->line_2) $address->line_2 = $addressData["line_2"];
+        if ($addressData["city"] !== $address->city) $address->city = $addressData["city"];
+        if ($addressData["state"] !== $address->state) $address->state = $addressData["state"];
+        if ($addressData["zip"] !== $address->zip) $address->zip = $addressData["zip"];
 
-            if ($selectedPropertyRoom->exists()) {
-                if ($rawRoomData['quantity'] < 0) {
-                    $selectedPropertyRoom->update([
-                        "quantity" => 0,
-                    ]);
+        $address->save();
 
-                } else {
-                    $selectedPropertyRoom->update([
-                        "quantity" => $rawRoomData['quantity'],
-                    ]);
-
-                }
-
-            } else {
-                if ($rawRoomData['quantity'] < 0) {
-                    PropertyRooms::create([
-                        "property_id" => $property->id,
-                        "room_id" => $rawRoomData['id'],
-                        "quantity" => 0,
-                    ]);
-
-                } else {
-                    PropertyRooms::create([
-                        "property_id" => $property->id,
-                        "room_id" => $rawRoomData['id'],
-                        "quantity" => $rawRoomData['quantity'],
-                    ]);
-
-                }
-
+        foreach ($images->get() as $image) {
+            if (!in_array($image->url, request('images'))) {
+                PropertyImage::wherePropertyId($id)->whereUrl($image->url)->delete();
             }
-        }
+        };
 
-        foreach ($request->images as $imageURL) {
-            $selectedPropertyImage = PropertyImage::wherePropertyId($id)->whereUrl($imageURL);
-
-            if (!$selectedPropertyImage->exists()) {
+        foreach (request('images') as $imageURL) {
+            if (!PropertyImage::wherePropertyId($id)->whereUrl($imageURL)->exists()) {
                 PropertyImage::create([
-                    "property_id" => $property->id,
-                    "url" => $imageURL,
+                    "property_id" => $id,
+                    "url" => $imageURL
                 ]);
             }
         }
 
-        foreach ($propertyImages as $propertyImage) {
-            if (!in_array($propertyImage, $request->images)) {
-                PropertyImage::wherePropertyId($id)->whereUrl($propertyImage)->delete();
+        foreach ($rooms as $room) {
+            if (!in_array($room->room_id, $roomsData->map(fn ($room) => $room["id"])->toArray())) {
+                PropertyRooms::wherePropertyId($id)->whereRoomId($room->room_id)->delete();
+            }
+        };
+
+        foreach ($roomsData as $roomData) {
+            $exists = PropertyRooms::wherePropertyId($id)->whereRoomId($roomData["id"])->exists();
+
+            if ($exists) {
+                PropertyRooms::wherePropertyId($id)->whereRoomId($roomData["id"])->first()->update([
+                    "quantity" => $roomData["quantity"]
+                ]);
+            } else {
+                PropertyRooms::create([
+                    "property_id" => $id,
+                    "room_id" => $roomData["id"],
+                    "quantity" => $roomData["quantity"]
+                ]);
             }
         }
 
