@@ -82,15 +82,6 @@ class PropertyController extends Controller
             ]);
         }
 
-        if (count(request('images') ?? []) > 0) {
-            foreach (request('images') as $imageURL) {
-                PropertyImage::create([
-                    "property_id" => $property->id,
-                    "url" => $imageURL
-                ]);
-            }
-        }
-
         if (count(request('rooms') ?? []) > 0) {
             foreach (request('rooms') as $room) {
                 PropertyRooms::create([
@@ -119,7 +110,6 @@ class PropertyController extends Controller
     {
         $property = Property::whereId($id)->first();
         $address = PropertyAddress::wherePropertyId($id)->first();
-        $images = PropertyImage::wherePropertyId($id);
         $rooms = PropertyRooms::wherePropertyId($id)->get();
 
         $addressData = request('address');
@@ -139,21 +129,6 @@ class PropertyController extends Controller
         if ($addressData["zip"] !== $address->zip) $address->zip = $addressData["zip"];
 
         $address->save();
-
-        foreach ($images->get() as $image) {
-            if (!in_array($image->url, request('images'))) {
-                PropertyImage::wherePropertyId($id)->whereUrl($image->url)->delete();
-            }
-        };
-
-        foreach (request('images') as $imageURL) {
-            if (!PropertyImage::wherePropertyId($id)->whereUrl($imageURL)->exists()) {
-                PropertyImage::create([
-                    "property_id" => $id,
-                    "url" => $imageURL
-                ]);
-            }
-        }
 
         foreach ($rooms as $room) {
             if (!in_array($room->room_id, $roomsData->map(fn ($room) => $room["id"])->toArray())) {

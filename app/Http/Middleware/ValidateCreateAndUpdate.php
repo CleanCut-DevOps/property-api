@@ -104,14 +104,5 @@ class ValidateCreateAndUpdate
             "rooms.*.quantity.integer" => "Room quantity must be an integer",
             "rooms.*.quantity.min" => "Room quantity must be greater than or equal to 0",
         ]);
-
-        $request->validate([
-            "images" => ["nullable", "array"],
-            "images.*" => ["string", "max:2048"],
-        ], [
-            "images.array" => "Images must be an array",
-            "images.*.string" => "Image must be a string",
-            "images.*.max" => "Image must be less than 2048 characters",
-        ]);
     }
 }
