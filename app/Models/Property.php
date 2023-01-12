@@ -6,16 +6,12 @@ use App\Traits\UUID;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder as QueryBuilder;
-use Illuminate\Notifications\DatabaseNotification;
-use Illuminate\Notifications\DatabaseNotificationCollection;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Http;
 
 /**
  * App\Models\Property
@@ -32,10 +28,8 @@ use Illuminate\Support\Facades\Http;
  * @property-read Model|null $address
  * @property-read Collection|PropertyImage[] $images
  * @property-read Collection|PropertyRooms[] $rooms
- * @property-read Collection|null $type
+ * @property-read PropertyType|null $type
  * @property-read int|null $images_count
- * @property-read DatabaseNotificationCollection|DatabaseNotification[] $notifications
- * @property-read int|null $notifications_count
  * @property-read int|null $rooms_count
  * @method static EloquentBuilder|Property newModelQuery()
  * @method static EloquentBuilder|Property newQuery()
@@ -56,43 +50,14 @@ use Illuminate\Support\Facades\Http;
  */
 class Property extends Model
 {
-    use HasFactory, SoftDeletes, Notifiable, UUID;
+    use SoftDeletes, UUID;
 
     public $appends = ["type", "address", "rooms", "images"];
 
-    /**
-     * Indicates if the model"s ID is auto-incrementing.
-     *
-     * @var bool
-     */
-    public $incrementing = false;
-
-    /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
     public $timestamps = true;
-
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
+    public $incrementing = false;
     protected $table = "property";
-
-    /**
-     * The primary key associated with the table.
-     *
-     * @var string
-     */
     protected $primaryKey = "id";
-
-    /**
-     * The data type of the ID.
-     *
-     * @var string
-     */
     protected $keyType = "string";
 
     /**
@@ -127,68 +92,51 @@ class Property extends Model
     ];
 
     /**
-     * Get the property"s type.
+     * Appends the property's type.
      *
-     * @return Collection|null
+     * @return Model | null
      */
-    public function getTypeAttribute(): array|null
+    public function getTypeAttribute(): Model|null
     {
         $typeID = $this->type_id;
 
         if ($typeID) {
-            $servicesAPI = config("env.SERVICES_API");
-
-            $response = Http::accept("application/json")->get("$servicesAPI/property/$typeID");
-
-            if ($response->successful()) {
-                return $response["propertyType"];
-            } else {
-                return null;
-            }
+            return $this->type()->first();
         } else return null;
     }
 
     /**
-     * Get the property"s rooms.
+     * Get the property's type.
      *
-     * @return array|null
+     * @return BelongsTo
      */
-    public function getRoomsAttribute(): array|null
+    public function type(): BelongsTo
     {
-        $rooms = [];
-        $rawRoomsData = $this->rooms()->get();
-
-        if (count($rawRoomsData) > 0) {
-            $servicesAPI = config("env.SERVICES_API");
-
-            foreach ($rawRoomsData as $rawRoomData) {
-                $roomID = $rawRoomData->room_id;
-                $response = Http::accept("application/json")->get("$servicesAPI/room/$roomID");
-                if ($response->successful()) {
-                    $rooms[] = [
-                        "type" => $response["roomType"],
-                        "quantity" => $rawRoomData->quantity,
-                        "updated_at" => $rawRoomData->updated_at,
-                    ];
-                }
-            }
-        }
-
-        return $rooms;
+        return $this->belongsTo(PropertyType::class);
     }
 
     /**
-     * Get the property that owns the image.
+     * Appends the property's rooms.
+     *
+     * @return Collection
+     */
+    public function getRoomsAttribute(): Collection
+    {
+        return $this->rooms()->get();
+    }
+
+    /**
+     * Get the property's rooms.
      *
      * @return HasMany
      */
     public function rooms(): HasMany
     {
-        return $this->hasMany(PropertyRooms::class, "property_id", "id");
+        return $this->hasMany(PropertyRooms::class);
     }
 
     /**
-     * Get the property"s address.
+     * Appends the property's address.
      *
      * @return Model|null
      */
@@ -198,19 +146,19 @@ class Property extends Model
     }
 
     /**
-     * Get the property that owns the image.
+     * Get the property's address.
      *
      * @return HasOne
      */
     public function address(): HasOne
     {
-        return $this->hasOne(PropertyAddress::class, "property_id", "id");
+        return $this->hasOne(PropertyAddress::class);
     }
 
     /**
-     * Get the property"s images.
+     * Appends the property's image urls.
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     public function getImagesAttribute(): \Illuminate\Support\Collection
     {
@@ -220,12 +168,14 @@ class Property extends Model
     }
 
     /**
-     * Get the property that owns the image.
+     * Get the property's images.
      *
      * @return HasMany
      */
     public function images(): HasMany
     {
-        return $this->hasMany(PropertyImage::class, "property_id", "id");
+        return $this->hasMany(PropertyImage::class);
     }
+
+
 }

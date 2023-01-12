@@ -5,12 +5,8 @@ namespace App\Models;
 use App\Traits\UUID;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Notifications\DatabaseNotification;
-use Illuminate\Notifications\DatabaseNotificationCollection;
-use Illuminate\Notifications\Notifiable;
 
 /**
  * App\Models\PropertyAddress
@@ -22,8 +18,6 @@ use Illuminate\Notifications\Notifiable;
  * @property string|null $state
  * @property string|null $zip
  * @property int $updated_at
- * @property-read DatabaseNotificationCollection|DatabaseNotification[] $notifications
- * @property-read int|null $notifications_count
  * @property-read Property $property
  * @method static Builder|PropertyAddress newModelQuery()
  * @method static Builder|PropertyAddress newQuery()
@@ -39,43 +33,14 @@ use Illuminate\Notifications\Notifiable;
  */
 class PropertyAddress extends Model
 {
-    use HasFactory, Notifiable, UUID;
+    use UUID;
 
     const CREATED_AT = null;
 
-    /**
-     * Indicates if the model"s ID is auto-incrementing.
-     *
-     * @var bool
-     */
     public $incrementing = false;
-
-    /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
     public $timestamps = true;
-
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = "addresses";
-
-    /**
-     * The primary key associated with the table.
-     *
-     * @var string
-     */
     protected $primaryKey = "property_id";
-
-    /**
-     * The data type of the ID.
-     *
-     * @var string
-     */
     protected $keyType = "string";
 
     /**
@@ -107,12 +72,12 @@ class PropertyAddress extends Model
     protected $casts = ["updated_at" => "timestamp"];
 
     /**
-     * Get the property that owns the rooms.
+     * Get the property that owns the address.
      *
      * @return BelongsTo
      */
     public function property(): BelongsTo
     {
-        return $this->belongsTo(Property::class, "property_id", "id");
+        return $this->belongsTo(Property::class);
     }
 }
