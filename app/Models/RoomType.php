@@ -40,7 +40,6 @@ class RoomType extends Model
     protected $table = 'room_type';
     protected $primaryKey = 'id';
     protected $fillable = [
-        'id',
         'type_id',
         'label',
         'price',

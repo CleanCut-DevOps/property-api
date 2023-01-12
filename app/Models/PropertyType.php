@@ -46,7 +46,6 @@ class PropertyType extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'id',
         'label',
         'description',
         'detailed_description',

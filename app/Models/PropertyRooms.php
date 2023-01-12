@@ -78,7 +78,7 @@ class PropertyRooms extends Model
      */
     public function getTypeAttribute(): Model
     {
-        return $this->type()->first();
+        return RoomType::whereId($this->room_id)->first();
     }
 
     /**
