@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Http\Middleware\BelongsToAccount;
-use App\Http\Middleware\ValidateCreateAndUpdate;
 use App\Http\Middleware\ValidateJWT;
+use App\Http\Middleware\ValidatePropertyCU;
 use App\Models\Property;
 use App\Models\PropertyAddress;
-use App\Models\PropertyImage;
 use App\Models\PropertyRooms;
+use App\Models\RoomType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -18,7 +18,7 @@ class PropertyController extends Controller
     public function __construct()
     {
         $this->middleware(ValidateJWT::class);
-        $this->middleware(ValidateCreateAndUpdate::class)->only(['store', 'update']);
+        $this->middleware(ValidatePropertyCU::class)->only(['store', 'update']);
         $this->middleware(BelongsToAccount::class)->only(["show", "update", "destroy"]);
     }
 
@@ -71,7 +71,12 @@ class PropertyController extends Controller
 
         if (!request('icon')) $request['icon'] = $emoji_arr[array_rand($emoji_arr)];
 
-        $property = Property::create($request->all());
+        $property = Property::create([
+            "user_id" => request('user_id'),
+            "icon" => request('icon'),
+            "label" => request('label'),
+            "description" => request('description')
+        ]);
 
         if (!request('address')) {
             PropertyAddress::create(["property_id" => $property->id]);
@@ -82,21 +87,49 @@ class PropertyController extends Controller
             ]);
         }
 
-        if (count(request('rooms') ?? []) > 0) {
-            foreach (request('rooms') as $room) {
-                PropertyRooms::create([
-                    "property_id" => $property->id,
-                    "room_id" => $room["id"],
-                    "quantity" => $room["quantity"]
-                ]);
-            }
-        }
-
         return response()->json([
             "type" => "Successful request",
             "message" => "Property created successfully",
             "property" => $property->refresh(),
         ], 201);
+    }
+
+    public function updateTypes(Request $request, string $id): JsonResponse
+    {
+        $property = Property::whereId($id)->first();
+
+        $property->type_id = request('type_id');
+
+        $property->save();
+
+        $reqRooms = request('rooms');
+
+        foreach ($reqRooms as $reqRoom) {
+            $room = PropertyRooms::wherePropertyId($id)->whereRoomId($reqRoom['id']);
+
+            if ($room->exists()) {
+                $room->update(["quantity" => $reqRoom['quantity']]);
+            } else {
+                PropertyRooms::create([
+                    "property_id" => $id,
+                    "room_id" => $reqRoom['id'],
+                    "quantity" => $reqRoom['quantity']
+                ]);
+            }
+        }
+
+        foreach(PropertyRooms::wherePropertyId($id)->get() as $room) {
+            $roomType = RoomType::whereId($room->room_id)->first();
+
+            if (!$roomType->type_id != request('type_id')) $room->delete();
+        }
+
+        return response()->json([
+            "type" => "Successful request",
+            "message" => "User property updated successfully",
+            "propertyType" => $property->getTypeAttribute(),
+            "propertyRooms" => $property->getRoomsAttribute()
+        ], 200);
     }
 
     /**
@@ -110,10 +143,8 @@ class PropertyController extends Controller
     {
         $property = Property::whereId($id)->first();
         $address = PropertyAddress::wherePropertyId($id)->first();
-        $rooms = PropertyRooms::wherePropertyId($id)->get();
 
         $addressData = request('address');
-        $roomsData = collect(request('rooms'));
 
         if (request('icon') !== $property->icon) $property->icon = request('icon');
         if (request('label') !== $property->label) $property->label = request('label');
@@ -129,28 +160,6 @@ class PropertyController extends Controller
         if ($addressData["zip"] !== $address->zip) $address->zip = $addressData["zip"];
 
         $address->save();
-
-        foreach ($rooms as $room) {
-            if (!in_array($room->room_id, $roomsData->map(fn ($room) => $room["id"])->toArray())) {
-                PropertyRooms::wherePropertyId($id)->whereRoomId($room->room_id)->delete();
-            }
-        };
-
-        foreach ($roomsData as $roomData) {
-            $exists = PropertyRooms::wherePropertyId($id)->whereRoomId($roomData["id"])->exists();
-
-            if ($exists) {
-                PropertyRooms::wherePropertyId($id)->whereRoomId($roomData["id"])->first()->update([
-                    "quantity" => $roomData["quantity"]
-                ]);
-            } else {
-                PropertyRooms::create([
-                    "property_id" => $id,
-                    "room_id" => $roomData["id"],
-                    "quantity" => $roomData["quantity"]
-                ]);
-            }
-        }
 
         return response()->json([
             "type" => "Successful request",
