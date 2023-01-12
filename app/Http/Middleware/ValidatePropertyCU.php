@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
-class ValidateCreateAndUpdate
+class ValidatePropertyCU
 {
     /**
      * Handle an incoming request.
@@ -25,22 +25,7 @@ class ValidateCreateAndUpdate
         try {
             $this->validateTypes($request);
 
-            if (request('type_id') || count(request('rooms') ?? []) > 0) {
-                $servicesAPI = config("env.SERVICES_API");
-
-                $response = Http::accept("application/json")->post("$servicesAPI/validate/property", [
-                    "type" => request('type_id'),
-                    "rooms" => collect(request('rooms'))->map(fn($room) => $room["id"]),
-                ]);
-
-                if ($response->successful()) {
-                    return $next($request);
-                } else {
-                    return response()->json($response->json(), 400);
-                }
-            } else {
-                return $next($request);
-            }
+            return $next($request);
         } catch (ValidationException $e) {
             $errors = collect($e->errors());
 
@@ -58,7 +43,6 @@ class ValidateCreateAndUpdate
             "icon" => ["string", "max:255", "min:1"],
             "label" => ["string", "max:255"],
             "description" => ["nullable", "between:1,1200"],
-            "type_id" => ["nullable", "string", "max:255", Rule::requiredIf(count(request('rooms') ?? []) > 0)],
         ], [
             "icon.string" => "The icon must be a string",
             "icon.max" => "The icon must be less than 255 characters",
@@ -89,20 +73,6 @@ class ValidateCreateAndUpdate
             "address.state.string" => "State must be a string",
             "address.state.max" => "State must be less than 255 characters",
             "address.zip.numeric" => "Zip code must be numeric",
-        ]);
-
-        $request->validate([
-            "rooms" => ["nullable", "array"],
-            "rooms.*.id" => ["required", "string", "max:255"],
-            "rooms.*.quantity" => ["required", "integer", 'min:0'],
-        ], [
-            "rooms.array" => "Rooms attribute must be an array",
-            "rooms.*.id.required" => "Room id is required",
-            "rooms.*.id.string" => "Room id must be a string",
-            "rooms.*.id.max" => "Room id must be less than 255 characters",
-            "rooms.*.quantity.required" => "Room quantity is required",
-            "rooms.*.quantity.integer" => "Room quantity must be an integer",
-            "rooms.*.quantity.min" => "Room quantity must be greater than or equal to 0",
         ]);
     }
 }
