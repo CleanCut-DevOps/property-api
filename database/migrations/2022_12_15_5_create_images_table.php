@@ -14,6 +14,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('images', function (Blueprint $table) {
+            $table->string('public_id');
             $table->uuid('property_id');
             $table->text('url');
 
