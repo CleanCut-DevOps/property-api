@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class ValidateTypeCU
 {
@@ -40,25 +41,29 @@ class ValidateTypeCU
 
             $reqRooms = request('rooms');
 
-            foreach ($reqRooms as $room) {
-                $reqRoomType = RoomType::whereId($room['id'])->first();
+            if ($reqRooms) {
+                foreach ($reqRooms as $room) {
+                    $reqRoomType = RoomType::whereId($room['id'])->first();
 
-                if (!$reqRoomType->available) {
-                    return response()->json([
-                        "type" => "Resource not available",
-                        "message" => "The requested room type is not available",
-                        "errors" => [
-                            "rooms" => "The requested room type is not available"
-                        ]
-                    ], 400);
-                } else if (!$reqRoomType->type_id === request('type_id')) {
-                    return response()->json([
-                        "type" => "Invalid request",
-                        "message" => "The requested room type does not belong to the requested property type",
-                        "errors" => [
-                            "rooms" => "The requested room type does not belong to the requested property type"
-                        ]
-                    ], 400);
+                    if (!$reqRoomType->available) {
+                        return response()->json([
+                            "type" => "Resource not available",
+                            "message" => "The requested room type is not available",
+                            "errors" => [
+                                "rooms" => "The requested room type is not available"
+                            ]
+                        ], 400);
+                    }
+
+                    if ($reqRoomType->type_id != request('type_id')) {
+                        return response()->json([
+                            "type" => "Invalid request",
+                            "message" => "The requested room type does not belong to the requested property type",
+                            "errors" => [
+                                "rooms" => "The requested room type does not belong to the requested property type"
+                            ]
+                        ], 400);
+                    }
                 }
             }
 

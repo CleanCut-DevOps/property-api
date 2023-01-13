@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Middleware\BelongsToAccount;
 use App\Http\Middleware\ValidateJWT;
 use App\Http\Middleware\ValidatePropertyCU;
+use App\Http\Middleware\ValidateTypeCU;
 use App\Models\Property;
 use App\Models\PropertyAddress;
 use App\Models\PropertyRooms;
@@ -19,7 +20,8 @@ class PropertyController extends Controller
     {
         $this->middleware(ValidateJWT::class);
         $this->middleware(ValidatePropertyCU::class)->only(['store', 'update']);
-        $this->middleware(BelongsToAccount::class)->only(["show", "update", "destroy"]);
+        $this->middleware(ValidateTypeCU::class)->only(['updateTypes']);
+        $this->middleware(BelongsToAccount::class)->only(["show", "update", "updateTypes", "destroy"]);
     }
 
     /**
@@ -69,12 +71,10 @@ class PropertyController extends Controller
     {
         $emoji_arr = ['🪟', '🏚️', '🛖', '🎈', '🏠', '🏡', '🏢', '🏣', '🏤', '🏥', '🏦', '🏨', '🏩', '🏪', '🏫', '🏬', '🏭', '🏯', '🏰', '💒', '🗼', '🗽', '⛪', '🕌', '🕍', '⛩️'];
 
-        if (!request('icon')) $request['icon'] = $emoji_arr[array_rand($emoji_arr)];
-
         $property = Property::create([
             "user_id" => request('user_id'),
-            "icon" => request('icon'),
-            "label" => request('label'),
+            "icon" => request('icon') ?? $emoji_arr[array_rand($emoji_arr)],
+            "label" => request('label') ?? "My Property",
             "description" => request('description')
         ]);
 
@@ -102,33 +102,39 @@ class PropertyController extends Controller
 
         $property->save();
 
-        $reqRooms = request('rooms');
+        foreach(PropertyRooms::wherePropertyId($id)->get() as $room) {
+            if (RoomType::whereId($room->room_id)->first()->type_id != request('type_id')) {
+                PropertyRooms::wherePropertyId($id)->whereRoomId($room->room_id)->delete();
+            }
+        }
 
-        foreach ($reqRooms as $reqRoom) {
-            $room = PropertyRooms::wherePropertyId($id)->whereRoomId($reqRoom['id']);
-
-            if ($room->exists()) {
-                $room->update(["quantity" => $reqRoom['quantity']]);
-            } else {
+        foreach (RoomType::whereTypeId(request('type_id'))->get() as $roomType) {
+            if (!PropertyRooms::wherePropertyId($id)->whereRoomId($roomType->id)->exists()) {
                 PropertyRooms::create([
                     "property_id" => $id,
-                    "room_id" => $reqRoom['id'],
-                    "quantity" => $reqRoom['quantity']
+                    "room_id" => $roomType->id,
+                    "quantity" => 0
                 ]);
             }
         }
 
-        foreach(PropertyRooms::wherePropertyId($id)->get() as $room) {
-            $roomType = RoomType::whereId($room->room_id)->first();
+        $reqRooms = request('rooms');
 
-            if (!$roomType->type_id != request('type_id')) $room->delete();
+        if ($reqRooms) {
+            foreach ($reqRooms as $reqRoom) {
+                $room = PropertyRooms::wherePropertyId($id)->whereRoomId($reqRoom['id']);
+
+                if ($room->exists()) {
+                    $room->update(["quantity" => $reqRoom['quantity']]);
+                }
+            }
         }
 
         return response()->json([
             "type" => "Successful request",
             "message" => "User property updated successfully",
             "propertyType" => $property->getTypeAttribute(),
-            "propertyRooms" => $property->getRoomsAttribute()
+            "propertyRooms" => PropertyRooms::wherePropertyId($id)->get(),
         ], 200);
     }
 
@@ -148,7 +154,6 @@ class PropertyController extends Controller
 
         if (request('icon') !== $property->icon) $property->icon = request('icon');
         if (request('label') !== $property->label) $property->label = request('label');
-        if (request('type_id') !== $property->type_id) $property->type_id = request('type_id');
         if (request('description') !== $property->description) $property->description = request('description');
 
         $property->save();
