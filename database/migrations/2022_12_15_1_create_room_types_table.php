@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('label');
             $table->unsignedDouble('price');
             $table->boolean('available');
+            $table->timestamps();
 
             $table->foreign('type_id')->references('id')->on('type');
         });

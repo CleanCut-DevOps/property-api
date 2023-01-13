@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $label
  * @property float $price
  * @property bool $available
+ * @property int|null $created_at
+ * @property int|null $updated_at
  * @property-read Collection|PropertyRooms[] $rooms
  * @property-read int|null $rooms_count
  * @property-read PropertyType $type
@@ -25,10 +27,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static Builder|RoomType newQuery()
  * @method static Builder|RoomType query()
  * @method static Builder|RoomType whereAvailable($value)
+ * @method static Builder|RoomType whereCreatedAt($value)
  * @method static Builder|RoomType whereId($value)
  * @method static Builder|RoomType whereLabel($value)
  * @method static Builder|RoomType wherePrice($value)
  * @method static Builder|RoomType whereTypeId($value)
+ * @method static Builder|RoomType whereUpdatedAt($value)
  * @mixin Eloquent
  */
 class RoomType extends Model
@@ -36,18 +40,20 @@ class RoomType extends Model
     use UUID;
 
     public $incrementing = false;
-    public $timestamps = false;
-    protected $table = 'room_type';
-    protected $primaryKey = 'id';
+    public $timestamps = true;
+    protected $table = "room_type";
+    protected $primaryKey = "id";
     protected $fillable = [
-        'type_id',
-        'label',
-        'price',
-        'available',
+        "type_id",
+        "label",
+        "price",
+        "available",
     ];
 
     protected $casts = [
-        'available' => 'boolean',
+        "created_at" => "timestamp",
+        "updated_at" => "timestamp",
+        "available" => "boolean"
     ];
 
     /**

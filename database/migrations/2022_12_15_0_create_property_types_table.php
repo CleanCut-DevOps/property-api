@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('description');
             $table->text('detailed_description')->nullable();
             $table->boolean('available')->default(true);
+            $table->timestamps();
         });
     }
 

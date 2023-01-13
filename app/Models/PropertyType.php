@@ -17,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $description
  * @property string|null $detailed_description
  * @property bool $available
+ * @property int|null $created_at
+ * @property int|null $updated_at
  * @property-read Collection|Property[] $properties
  * @property-read int|null $properties_count
  * @property-read Collection|RoomType[] $rooms
@@ -25,10 +27,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static Builder|PropertyType newQuery()
  * @method static Builder|PropertyType query()
  * @method static Builder|PropertyType whereAvailable($value)
+ * @method static Builder|PropertyType whereCreatedAt($value)
  * @method static Builder|PropertyType whereDescription($value)
  * @method static Builder|PropertyType whereDetailedDescription($value)
  * @method static Builder|PropertyType whereId($value)
  * @method static Builder|PropertyType whereLabel($value)
+ * @method static Builder|PropertyType whereUpdatedAt($value)
  * @mixin Eloquent
  */
 class PropertyType extends Model
@@ -36,9 +40,9 @@ class PropertyType extends Model
     use UUID;
 
     public $incrementing = false;
-    public $timestamps = false;
-    protected $table = 'type';
-    protected $primaryKey = 'id';
+    public $timestamps = true;
+    protected $table = "type";
+    protected $primaryKey = "id";
 
     /**
      * The attributes that are mass assignable.
@@ -46,10 +50,10 @@ class PropertyType extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'label',
-        'description',
-        'detailed_description',
-        'available',
+        "label",
+        "description",
+        "detailed_description",
+        "available",
     ];
 
     /**
@@ -57,7 +61,11 @@ class PropertyType extends Model
      *
      * @var array<string, string>
      */
-    protected $casts = ["available" => "boolean"];
+    protected $casts = [
+        "created_at" => "timestamp",
+        "updated_at" => "timestamp",
+        "available" => "boolean"
+    ];
 
     /**
      * Get the properties for the type.
