@@ -2,15 +2,10 @@
 
 namespace App\Models;
 
-use App\Traits\UUID;
 use Eloquent;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Notifications\DatabaseNotification;
-use Illuminate\Notifications\DatabaseNotificationCollection;
-use Illuminate\Notifications\Notifiable;
 
 /**
  * App\Models\PropertyRooms
@@ -19,51 +14,27 @@ use Illuminate\Notifications\Notifiable;
  * @property string $room_id
  * @property int $quantity
  * @property int $updated_at
- * @property-read DatabaseNotificationCollection|DatabaseNotification[] $notifications
- * @property-read int|null $notifications_count
+ * @property-read RoomType $type
  * @property-read Property $property
- * @method static EloquentBuilder|PropertyRooms newModelQuery()
- * @method static EloquentBuilder|PropertyRooms newQuery()
- * @method static EloquentBuilder|PropertyRooms query()
- * @method static EloquentBuilder|PropertyRooms wherePropertyId($value)
- * @method static EloquentBuilder|PropertyRooms whereQuantity($value)
- * @method static EloquentBuilder|PropertyRooms whereRoomId($value)
- * @method static EloquentBuilder|PropertyRooms whereUpdatedAt($value)
+ * @method static Builder|PropertyRooms newModelQuery()
+ * @method static Builder|PropertyRooms newQuery()
+ * @method static Builder|PropertyRooms query()
+ * @method static Builder|PropertyRooms wherePropertyId($value)
+ * @method static Builder|PropertyRooms whereQuantity($value)
+ * @method static Builder|PropertyRooms whereRoomId($value)
+ * @method static Builder|PropertyRooms whereUpdatedAt($value)
  * @mixin Eloquent
  */
 class PropertyRooms extends Model
 {
-    use HasFactory, Notifiable;
-
     const CREATED_AT = null;
 
-    /**
-     * Indicates if the model's ID is auto-incrementing.
-     *
-     * @var bool
-     */
+    public $appends = ["type"];
+
     public $incrementing = false;
-
-    /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
     public $timestamps = true;
-
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'rooms';
-
-    /**
-     * The data type of the ID.
-     *
-     * @var string
-     */
-    protected $keyType = 'string';
+    protected $table = "rooms";
+    protected $keyType = "string";
 
     /**
      * The attributes that are mass assignable.
@@ -71,9 +42,9 @@ class PropertyRooms extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'property_id',
-        'room_id',
-        'quantity'
+        "property_id",
+        "room_id",
+        "quantity"
     ];
 
     /**
@@ -81,14 +52,14 @@ class PropertyRooms extends Model
      *
      * @var array<int, string>
      */
-    protected $hidden = ['property_id'];
+    protected $hidden = ["property_id", "room_id"];
 
     /**
      * The attributes that should be cast.
      *
      * @var array<string, string>
      */
-    protected $casts = ['updated_at' => 'timestamp'];
+    protected $casts = ["updated_at" => "timestamp"];
 
     /**
      * Get the property that owns the rooms.
@@ -97,6 +68,26 @@ class PropertyRooms extends Model
      */
     public function property(): BelongsTo
     {
-        return $this->belongsTo(Property::class, 'property_id', 'id');
+        return $this->belongsTo(Property::class);
+    }
+
+    /**
+     * Appends the room's type.
+     *
+     * @return Model
+     */
+    public function getTypeAttribute(): Model
+    {
+        return RoomType::whereId($this->room_id)->first();
+    }
+
+    /**
+     * Get the room's type.
+     *
+     * @return BelongsTo
+     */
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(RoomType::class);
     }
 }

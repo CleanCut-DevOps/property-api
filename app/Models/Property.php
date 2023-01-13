@@ -6,34 +6,31 @@ use App\Traits\UUID;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder as QueryBuilder;
-use Illuminate\Notifications\DatabaseNotification;
-use Illuminate\Notifications\DatabaseNotificationCollection;
-use Illuminate\Notifications\Notifiable;
 
 /**
  * App\Models\Property
  *
  * @property string $id
- * @property string $user_id
- * @property string $type_id
- * @property string $name
- * @property string $description
+ * @property string|null $user_id
+ * @property string|null $type_id
+ * @property string $icon
+ * @property string $label
+ * @property string|null $description
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
- * @property-read Model $address
+ * @property-read Model|null $address
  * @property-read Collection|PropertyImage[] $images
- * @property-read PropertyRooms|null $rooms
- * @property-read string $type
+ * @property-read Collection|PropertyRooms[] $rooms
+ * @property-read PropertyType|null $type
  * @property-read int|null $images_count
- * @property-read DatabaseNotificationCollection|DatabaseNotification[] $notifications
- * @property-read int|null $notifications_count
+ * @property-read int|null $rooms_count
  * @method static EloquentBuilder|Property newModelQuery()
  * @method static EloquentBuilder|Property newQuery()
  * @method static QueryBuilder|Property onlyTrashed()
@@ -41,8 +38,9 @@ use Illuminate\Notifications\Notifiable;
  * @method static EloquentBuilder|Property whereCreatedAt($value)
  * @method static EloquentBuilder|Property whereDeletedAt($value)
  * @method static EloquentBuilder|Property whereDescription($value)
+ * @method static EloquentBuilder|Property whereIcon($value)
  * @method static EloquentBuilder|Property whereId($value)
- * @method static EloquentBuilder|Property whereName($value)
+ * @method static EloquentBuilder|Property whereLabel($value)
  * @method static EloquentBuilder|Property whereTypeId($value)
  * @method static EloquentBuilder|Property whereUpdatedAt($value)
  * @method static EloquentBuilder|Property whereUserId($value)
@@ -52,52 +50,27 @@ use Illuminate\Notifications\Notifiable;
  */
 class Property extends Model
 {
-    use HasFactory, SoftDeletes, Notifiable, UUID;
+    use SoftDeletes, UUID;
 
-    public $appends = ['type', 'address', 'rooms', 'images'];
+    public $appends = ["type", "address", "rooms", "images"];
 
-    /**
-     * Indicates if the model's ID is auto-incrementing.
-     *
-     * @var bool
-     */
-    public $incrementing = false;
-
-    /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
     public $timestamps = true;
+    public $incrementing = false;
+    protected $table = "property";
+    protected $primaryKey = "id";
+    protected $keyType = "string";
 
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'property';
-    /**
-     * The primary key associated with the table.
-     *
-     * @var string
-     */
-    protected $primaryKey = 'id';
-    /**
-     * The data type of the ID.
-     *
-     * @var string
-     */
-    protected $keyType = 'string';
     /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
     protected $fillable = [
-        'user_id',
-        'type_id',
-        'name',
-        'description',
+        "user_id",
+        "type_id",
+        "icon",
+        "label",
+        "description",
     ];
 
     /**
@@ -105,7 +78,7 @@ class Property extends Model
      *
      * @var array<int, string>
      */
-    protected $hidden = ['deleted_at', 'type_id'];
+    protected $hidden = ["deleted_at", "type_id"];
 
     /**
      * The attributes that should be cast.
@@ -113,23 +86,37 @@ class Property extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'deleted_at' => 'timestamp',
-        'created_at' => 'timestamp',
-        'updated_at' => 'timestamp',
+        "deleted_at" => "timestamp",
+        "created_at" => "timestamp",
+        "updated_at" => "timestamp",
     ];
+
+    /**
+     * Appends the property's type.
+     *
+     * @return Model | null
+     */
+    public function getTypeAttribute(): Model|null
+    {
+        $typeID = $this->type_id;
+
+        if ($typeID) {
+            return $this->type()->first();
+        } else return null;
+    }
 
     /**
      * Get the property's type.
      *
-     * @return string
+     * @return BelongsTo
      */
-    public function getTypeAttribute(): string
+    public function type(): BelongsTo
     {
-        return $this->type_id;
+        return $this->belongsTo(PropertyType::class);
     }
 
     /**
-     * Get the property's rooms.
+     * Appends the property's rooms.
      *
      * @return Collection
      */
@@ -139,54 +126,56 @@ class Property extends Model
     }
 
     /**
-     * Get the property that owns the image.
+     * Get the property's rooms.
      *
      * @return HasMany
      */
     public function rooms(): HasMany
     {
-        return $this->hasMany(PropertyRooms::class, 'property_id', 'id');
+        return $this->hasMany(PropertyRooms::class);
     }
 
     /**
-     * Get the property's address.
+     * Appends the property's address.
      *
-     * @return Model
+     * @return Model|null
      */
-    public function getAddressAttribute(): Model
+    public function getAddressAttribute(): Model|null
     {
         return $this->address()->first();
     }
 
     /**
-     * Get the property that owns the image.
+     * Get the property's address.
      *
      * @return HasOne
      */
     public function address(): HasOne
     {
-        return $this->hasOne(PropertyAddress::class, 'property_id', 'id');
+        return $this->hasOne(PropertyAddress::class);
     }
 
     /**
-     * Get the property's images.
+     * Appends the property's image urls.
      *
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      */
     public function getImagesAttribute(): \Illuminate\Support\Collection
     {
         $raw = $this->images()->get();
 
-        return $raw->map(fn ($image) => $image->url);
+        return $raw->map(fn($image) => $image->url);
     }
 
     /**
-     * Get the property that owns the image.
+     * Get the property's images.
      *
      * @return HasMany
      */
     public function images(): HasMany
     {
-        return $this->hasMany(PropertyImage::class, 'property_id', 'id');
+        return $this->hasMany(PropertyImage::class);
     }
+
+
 }

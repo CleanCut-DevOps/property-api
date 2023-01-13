@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Middleware\BelongsToAccount;
-use App\Http\Middleware\ValidateCreateAndUpdate;
 use App\Http\Middleware\ValidateJWT;
+use App\Http\Middleware\ValidatePropertyCU;
+use App\Http\Middleware\ValidateTypeCU;
 use App\Models\Property;
 use App\Models\PropertyAddress;
-use App\Models\PropertyImage;
 use App\Models\PropertyRooms;
+use App\Models\RoomType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -18,8 +19,9 @@ class PropertyController extends Controller
     public function __construct()
     {
         $this->middleware(ValidateJWT::class);
-        $this->middleware(ValidateCreateAndUpdate::class)->only(["store", "update"]);
-        $this->middleware(BelongsToAccount::class)->only(["show", "update", "destroy"]);
+        $this->middleware(ValidatePropertyCU::class)->only(['store', 'update']);
+        $this->middleware(ValidateTypeCU::class)->only(['updateTypes']);
+        $this->middleware(BelongsToAccount::class)->only(["show", "update", "updateTypes", "destroy"]);
     }
 
     /**
@@ -30,7 +32,7 @@ class PropertyController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $user_id = $request->user_id;
+        $user_id = request('user_id');
 
         $properties = Property::whereUserId($user_id)->get();
 
@@ -67,44 +69,73 @@ class PropertyController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $property = Property::create($request->all());
+        $emoji_arr = ['🪟', '🏚️', '🛖', '🎈', '🏠', '🏡', '🏢', '🏣', '🏤', '🏥', '🏦', '🏨', '🏩', '🏪', '🏫', '🏬', '🏭', '🏯', '🏰', '💒', '🗼', '🗽', '⛪', '🕌', '🕍', '⛩️'];
 
-        PropertyAddress::create([
-            "property_id" => $property->id,
-            "line_1" => $request->address['line_1'],
-            "line_2" => $request->address['line_2'],
-            "city" => $request->address['city'],
-            "state" => $request->address['state'],
-            "postal_code" => $request->address['postal_code'],
+        $property = Property::create([
+            "user_id" => request('user_id'),
+            "icon" => request('icon') ?? $emoji_arr[array_rand($emoji_arr)],
+            "label" => request('label') ?? "My Property",
+            "description" => request('description')
         ]);
 
-        foreach ($request->rooms as $rawRoomData) {
-            if ($rawRoomData['quantity'] < 1) {
-                PropertyRooms::create([
-                    "property_id" => $property->id,
-                    "room_id" => $rawRoomData['id'],
-                    "quantity" => 0
-                ]);
-            }
-            PropertyRooms::create([
-                "property_id" => $property->id,
-                "room_id" => $rawRoomData['id'],
-                "quantity" => $rawRoomData['quantity'],
-            ]);
-        }
-
-        foreach ($request->images as $imageURL) {
-            PropertyImage::create([
-                "property_id" => $property->id,
-                "url" => $imageURL,
+        if (!request('address')) {
+            PropertyAddress::create(["property_id" => $property->id]);
+        } else {
+            PropertyAddress::create([
+                ...request("address"),
+                "property_id" => $property->id
             ]);
         }
 
         return response()->json([
             "type" => "Successful request",
-            "message" => "User property created successfully",
+            "message" => "Property created successfully",
             "property" => $property->refresh(),
         ], 201);
+    }
+
+    public function updateTypes(Request $request, string $id): JsonResponse
+    {
+        $property = Property::whereId($id)->first();
+
+        $property->type_id = request('type_id');
+
+        $property->save();
+
+        foreach(PropertyRooms::wherePropertyId($id)->get() as $room) {
+            if (RoomType::whereId($room->room_id)->first()->type_id != request('type_id')) {
+                PropertyRooms::wherePropertyId($id)->whereRoomId($room->room_id)->delete();
+            }
+        }
+
+        foreach (RoomType::whereTypeId(request('type_id'))->get() as $roomType) {
+            if (!PropertyRooms::wherePropertyId($id)->whereRoomId($roomType->id)->exists()) {
+                PropertyRooms::create([
+                    "property_id" => $id,
+                    "room_id" => $roomType->id,
+                    "quantity" => 0
+                ]);
+            }
+        }
+
+        $reqRooms = request('rooms');
+
+        if ($reqRooms) {
+            foreach ($reqRooms as $reqRoom) {
+                $room = PropertyRooms::wherePropertyId($id)->whereRoomId($reqRoom['id']);
+
+                if ($room->exists()) {
+                    $room->update(["quantity" => $reqRoom['quantity']]);
+                }
+            }
+        }
+
+        return response()->json([
+            "type" => "Successful request",
+            "message" => "User property updated successfully",
+            "propertyType" => $property->getTypeAttribute(),
+            "propertyRooms" => PropertyRooms::wherePropertyId($id)->get(),
+        ], 200);
     }
 
     /**
@@ -117,67 +148,23 @@ class PropertyController extends Controller
     public function update(Request $request, string $id): JsonResponse
     {
         $property = Property::whereId($id)->first();
-        $propertyAddress = $property->address;
-        $propertyImages = $property->images;
+        $address = PropertyAddress::wherePropertyId($id)->first();
 
-        if ($property->type != $request->type) PropertyRooms::wherePropertyId($id)->delete();
+        $addressData = request('address');
 
-        $property->update($request->all());
+        if (request('icon') !== $property->icon) $property->icon = request('icon');
+        if (request('label') !== $property->label) $property->label = request('label');
+        if (request('description') !== $property->description) $property->description = request('description');
 
-        $propertyAddress->update($request->address);
+        $property->save();
 
-        foreach ($request->rooms as $rawRoomData) {
-            $selectedPropertyRoom = PropertyRooms::wherePropertyId($id)->whereRoomId($rawRoomData['id']);
+        if ($addressData["line_1"] !== $address->line_1) $address->line_1 = $addressData["line_1"];
+        if ($addressData["line_2"] !== $address->line_2) $address->line_2 = $addressData["line_2"];
+        if ($addressData["city"] !== $address->city) $address->city = $addressData["city"];
+        if ($addressData["state"] !== $address->state) $address->state = $addressData["state"];
+        if ($addressData["zip"] !== $address->zip) $address->zip = $addressData["zip"];
 
-            if ($selectedPropertyRoom->exists()) {
-                if ($rawRoomData['quantity'] < 0) {
-                    $selectedPropertyRoom->update([
-                        "quantity" => 0,
-                    ]);
-
-                } else {
-                    $selectedPropertyRoom->update([
-                        "quantity" => $rawRoomData['quantity'],
-                    ]);
-
-                }
-
-            } else {
-                if ($rawRoomData['quantity'] < 0) {
-                    PropertyRooms::create([
-                        "property_id" => $property->id,
-                        "room_id" => $rawRoomData['id'],
-                        "quantity" => 0,
-                    ]);
-
-                } else {
-                    PropertyRooms::create([
-                        "property_id" => $property->id,
-                        "room_id" => $rawRoomData['id'],
-                        "quantity" => $rawRoomData['quantity'],
-                    ]);
-
-                }
-
-            }
-        }
-
-        foreach ($request->images as $imageURL) {
-            $selectedPropertyImage = PropertyImage::wherePropertyId($id)->whereUrl($imageURL);
-
-            if (!$selectedPropertyImage->exists()) {
-                PropertyImage::create([
-                    "property_id" => $property->id,
-                    "url" => $imageURL,
-                ]);
-            }
-        }
-
-        foreach ($propertyImages as $propertyImage) {
-            if (!in_array($propertyImage, $request->images)) {
-                PropertyImage::wherePropertyId($id)->whereUrl($propertyImage)->delete();
-            }
-        }
+        $address->save();
 
         return response()->json([
             "type" => "Successful request",

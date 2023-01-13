@@ -13,17 +13,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create("property", function (Blueprint $table) {
+        Schema::create("room_type", function (Blueprint $table) {
             $table->uuid("id")->primary();
-            $table->uuid("user_id")->nullable();
-            $table->uuid("type_id")->nullable();
-            $table->string("icon", 48);
-            $table->string("label")->default("My Property");
-            $table->text("description")->nullable();
+            $table->uuid("type_id");
+            $table->string('label');
+            $table->unsignedDouble('price');
+            $table->boolean('available');
             $table->timestamps();
-            $table->softDeletes();
 
-            $table->foreign("type_id")->references("id")->on("type");
+            $table->foreign('type_id')->references('id')->on('type');
         });
     }
 
@@ -34,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists("property");
+        Schema::dropIfExists("room_type");
     }
 };
