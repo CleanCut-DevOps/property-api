@@ -12,6 +12,7 @@ use App\Models\Property;
 use App\Models\PropertyAddress;
 use App\Models\PropertyRooms;
 use App\Models\RoomType;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -194,13 +195,18 @@ class PropertyController extends Controller
      */
     public function destroy(Request $request, string $id): JsonResponse
     {
-        $property = Property::whereId($id)->first();
+        try {
+            Property::whereId($id)->delete();
 
-        $property->delete();
-
-        return response()->json([
-            "type" => "Successful request",
-            "message" => "User property deleted successfully",
-        ], 200);
+            return response()->json([
+                "type" => "Successful request",
+                "message" => "User property deleted successfully",
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                "type" => "Unsuccessful request",
+                "message" => "User property could not be deleted",
+            ], 400);
+        }
     }
 }
