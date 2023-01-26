@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Middleware\BelongsToAccount;
+use App\Http\Middleware\ValidateAddress;
+use App\Http\Middleware\ValidateCreateUpdateProperty;
 use App\Http\Middleware\ValidateJWT;
-use App\Http\Middleware\ValidatePropertyCU;
-use App\Http\Middleware\ValidateTypeCU;
+use App\Http\Middleware\ValidateRooms;
+use App\Http\Middleware\ValidateType;
 use App\Models\Property;
 use App\Models\PropertyAddress;
 use App\Models\PropertyRooms;
@@ -19,8 +21,10 @@ class PropertyController extends Controller
     public function __construct()
     {
         $this->middleware(ValidateJWT::class);
-        $this->middleware(ValidatePropertyCU::class)->only(['store', 'update']);
-        $this->middleware(ValidateTypeCU::class)->only(['updateTypes']);
+        $this->middleware(ValidateCreateUpdateProperty::class)->only(['store', 'update']);
+        $this->middleware(ValidateAddress::class)->only(['updateAddress']);
+        $this->middleware(ValidateType::class)->only(['updateType']);
+        $this->middleware(ValidateRooms::class)->only(['updateRooms']);
         $this->middleware(BelongsToAccount::class)->only(["show", "update", "updateTypes", "destroy"]);
     }
 
@@ -44,7 +48,7 @@ class PropertyController extends Controller
     }
 
     /**
-     * Display a listing of the resource.
+     * Display the specified resource.
      *
      * @param Request $request
      * @param string $id
@@ -94,83 +98,91 @@ class PropertyController extends Controller
         ], 201);
     }
 
-    public function updateTypes(Request $request, string $id): JsonResponse
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param string $id
+     * @return JsonResponse
+     */
+    public function updateAddress(string $id): JsonResponse
     {
-        $property = Property::whereId($id)->first();
-
-        $property->type_id = request('type_id');
-
-        $property->save();
-
-        foreach(PropertyRooms::wherePropertyId($id)->get() as $room) {
-            if (RoomType::whereId($room->room_id)->first()->type_id != request('type_id')) {
-                PropertyRooms::wherePropertyId($id)->whereRoomId($room->room_id)->delete();
-            }
-        }
-
-        foreach (RoomType::whereTypeId(request('type_id'))->get() as $roomType) {
-            if (!PropertyRooms::wherePropertyId($id)->whereRoomId($roomType->id)->exists()) {
-                PropertyRooms::create([
-                    "property_id" => $id,
-                    "room_id" => $roomType->id,
-                    "quantity" => 0
-                ]);
-            }
-        }
-
-        $reqRooms = request('rooms');
-
-        if ($reqRooms) {
-            foreach ($reqRooms as $reqRoom) {
-                $room = PropertyRooms::wherePropertyId($id)->whereRoomId($reqRoom['id']);
-
-                if ($room->exists()) {
-                    $room->update(["quantity" => $reqRoom['quantity']]);
-                }
-            }
-        }
+        PropertyAddress::wherePropertyId($id)->first()->update(request()->only(["line_1", "line_2", "city", "state", "zip"]));
 
         return response()->json([
             "type" => "Successful request",
-            "message" => "User property updated successfully",
-            "propertyType" => $property->getTypeAttribute(),
-            "propertyRooms" => PropertyRooms::wherePropertyId($id)->get(),
-        ], 200);
+            "message" => "Property updated successfully",
+            "property" => Property::whereId($id)->first()
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param Request $request
      * @param string $id
      * @return JsonResponse
      */
-    public function update(Request $request, string $id): JsonResponse
+    public function update(string $id): JsonResponse
     {
         $property = Property::whereId($id)->first();
-        $address = PropertyAddress::wherePropertyId($id)->first();
 
-        $addressData = request('address');
-
-        if (request('icon') !== $property->icon) $property->icon = request('icon');
-        if (request('label') !== $property->label) $property->label = request('label');
-        if (request('description') !== $property->description) $property->description = request('description');
-
-        $property->save();
-
-        if ($addressData["line_1"] !== $address->line_1) $address->line_1 = $addressData["line_1"];
-        if ($addressData["line_2"] !== $address->line_2) $address->line_2 = $addressData["line_2"];
-        if ($addressData["city"] !== $address->city) $address->city = $addressData["city"];
-        if ($addressData["state"] !== $address->state) $address->state = $addressData["state"];
-        if ($addressData["zip"] !== $address->zip) $address->zip = $addressData["zip"];
-
-        $address->save();
+        $property->update(request()->only(["icon", "label", "description"]));
 
         return response()->json([
             "type" => "Successful request",
-            "message" => "User property updated successfully",
+            "message" => "Property updated successfully",
             "property" => $property->refresh()
-        ], 200);
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param string $id
+     * @return JsonResponse
+     */
+    public function updateType(string $id): JsonResponse
+    {
+        $property = Property::whereId($id)->first();
+
+        $property->update(["type_id" => request('id')]);
+
+        PropertyRooms::wherePropertyId($id)->delete();
+
+        foreach (RoomType::whereTypeId(request("id"))->get() as $room) {
+            PropertyRooms::create(["quantity" => 0, "property_id" => $id, "room_id" => $room['id']]);
+        }
+
+        return response()->json([
+            "type" => "Successful request",
+            "message" => "Property updated successfully",
+            "property" => $property->refresh()
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param string $id
+     * @return JsonResponse
+     */
+    public function updateRooms(string $id): JsonResponse
+    {
+        $check = RoomType::whereId(request('id'))->first()->type_id == Property::whereId($id)->first()->type_id;
+
+        if ($check) {
+            PropertyRooms::wherePropertyId($id)->whereRoomId(request('id'))->update(["quantity" => request('quantity')]);
+
+            return response()->json([
+                "type" => "Successful request",
+                "message" => "Property updated successfully",
+                "property" => Property::whereId($id)->first()
+            ]);
+        } else {
+            return response()->json([
+                "type" => "Unsuccessful request",
+                "message" => "Room type does not belong to property type",
+            ], 400);
+        }
     }
 
     /**
