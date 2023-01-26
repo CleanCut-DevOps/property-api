@@ -15,11 +15,11 @@ class TypeController extends Controller
      */
     public function indexProperty(): JsonResponse
     {
-        $propertyTypes = PropertyType::all();
+        $propertyTypes = PropertyType::orderBy('label')->get();
 
         if (request('withRooms') == "true") {
             foreach($propertyTypes as $propertyType) {
-                $propertyType['rooms'] = RoomType::whereTypeId($propertyType->id)->get();
+                $propertyType['rooms'] = RoomType::whereTypeId($propertyType->id)->orderBy('label')->get();
             }
         }
 
@@ -47,7 +47,7 @@ class TypeController extends Controller
             ], 404);
         }
 
-        $roomTypes = RoomType::whereTypeId($id)->get();
+        $roomTypes = RoomType::whereTypeId($id)->orderBy('label')->get();
 
         return response()->json([
             "type" => "Successful request",
@@ -71,13 +71,15 @@ class TypeController extends Controller
                 "type" => "Not found",
                 "message" => "The property type with the given ID does not exist",
             ], 404);
-        }
+        } else {
+            $propertyType['rooms'] = RoomType::whereTypeId($id)->orderBy('label')->get();
 
-        return response()->json([
-            "type" => "Successful request",
-            "message" => "Displaying attributes of this type of property",
-            "propertyType" => $propertyType->first()
-        ]);
+            return response()->json([
+                "type" => "Successful request",
+                "message" => "Displaying attributes of this type of property",
+                "propertyType" => $propertyType->first()
+            ]);
+        }
     }
 
     /**

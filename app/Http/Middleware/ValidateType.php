@@ -10,9 +10,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Symfony\Component\Console\Output\ConsoleOutput;
 
-class ValidateTypeCU
+class ValidateType
 {
     /**
      * Handle an incoming request.
@@ -24,48 +23,14 @@ class ValidateTypeCU
     public function handle(Request $request, Closure $next): JsonResponse|RedirectResponse
     {
         try {
-            $this->validateTypes($request);
-            $this->validateExistence($request);
-
-            $reqType = PropertyType::whereId(request('type_id'));
-
-            if (!$reqType->first()->available) {
-                return response()->json([
-                    "type" => "Resource not available",
-                    "message" => "The requested property type is not available",
-                    "errors" => [
-                        "type_id" => "The requested property type is not available"
-                    ]
-                ], 400);
-            }
-
-            $reqRooms = request('rooms');
-
-            if ($reqRooms) {
-                foreach ($reqRooms as $room) {
-                    $reqRoomType = RoomType::whereId($room['id'])->first();
-
-                    if (!$reqRoomType->available) {
-                        return response()->json([
-                            "type" => "Resource not available",
-                            "message" => "The requested room type is not available",
-                            "errors" => [
-                                "rooms" => "The requested room type is not available"
-                            ]
-                        ], 400);
-                    }
-
-                    if ($reqRoomType->type_id != request('type_id')) {
-                        return response()->json([
-                            "type" => "Invalid request",
-                            "message" => "The requested room type does not belong to the requested property type",
-                            "errors" => [
-                                "rooms" => "The requested room type does not belong to the requested property type"
-                            ]
-                        ], 400);
-                    }
-                }
-            }
+            $request->validate([
+                "id" => ["required", "string", "max:255", Rule::exists("type", "id")],
+            ], [
+                "id.required" => "The type id is required",
+                "id.string" => "The type id must be a string",
+                "id.max" => "The type id must be less than 255 characters",
+                "id.exists" => "The type id does not exist"
+            ]);
 
             return $next($request);
         } catch (ValidationException $e) {
