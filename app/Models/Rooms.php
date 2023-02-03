@@ -29,8 +29,6 @@ use Illuminate\Support\Carbon;
  */
 class Rooms extends Model
 {
-    use UUID;
-
     const CREATED_AT = null;
 
     public $appends = ["type"];
