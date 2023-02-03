@@ -127,15 +127,15 @@ class PropertyController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param Property $property
+     * @param string $id
      * @return JsonResponse
      */
-    public function show(Property $property): JsonResponse
+    public function show(string $id): JsonResponse
     {
         return response()->json([
             'type' => 'Successful request',
             'message' => 'Property retrieved successfully',
-            'property' => $property->first(),
+            'property' => Property::whereId($id)->first(),
         ]);
     }
 
@@ -143,11 +143,13 @@ class PropertyController extends Controller
      * Update the specified resource in storage.
      *
      * @param Request $request
-     * @param Property $property
+     * @param string $id
      * @return JsonResponse
      */
-    public function update(Request $request, Property $property): JsonResponse
+    public function update(Request $request, string $id): JsonResponse
     {
+        $property = Property::whereId($id)->first();
+
         if ($request->exists('rooms')) {
             $errors = [];
 
@@ -155,7 +157,7 @@ class PropertyController extends Controller
                 $roomTypeID = $room['id'];
 
                 if (
-                    !RoomType::wherePropertyTypeId($request->exists('type_id') ? request('type_id') : $property->first()->type_id)
+                    !RoomType::wherePropertyTypeId($request->exists('type_id') ? request('type_id') : $property->type_id)
                     ->whereId($roomTypeID)
                     ->exists()
                 ) {
@@ -178,15 +180,15 @@ class PropertyController extends Controller
             }
         }
 
-        $property->first()->update($request->only(['icon', 'label', 'description', 'type_id']));
+        $property->update($request->only(['icon', 'label', 'description', 'type_id']));
 
-        $property->first()->address->update($request->only(['line_1', 'line_2', 'city', 'state', 'zip']));
+        $property->address->update($request->only(['line_1', 'line_2', 'city', 'state', 'zip']));
 
         if ($request->exists('type_id')) {
-            Rooms::wherePropertyId($property->first()->id)->delete();
+            Rooms::wherePropertyId($property->id)->delete();
 
             foreach (RoomType::wherePropertyTypeId(request('type_id'))->get() as $room) {
-                Rooms::create(['quantity' => 0, 'type_id' => $room->id, 'property_id' => $property->first()->id]);
+                Rooms::create(['quantity' => 0, 'type_id' => $room->id, 'property_id' => $property->id]);
             }
         }
 
@@ -195,7 +197,7 @@ class PropertyController extends Controller
                 $roomTypeID = $room['id'];
                 $quantity = $room['quantity'];
 
-                Rooms::wherePropertyId($property->first()->id)->whereTypeId($roomTypeID)->update(['quantity' => $quantity]);
+                Rooms::wherePropertyId($property->id)->whereTypeId($roomTypeID)->update(['quantity' => $quantity]);
             }
         }
 
@@ -208,11 +210,13 @@ class PropertyController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param Property $property
+     * @param string $id
      * @return JsonResponse
      */
-    public function destroy(Property $property): JsonResponse
+    public function destroy(string $id): JsonResponse
     {
+        $property = Property::whereId($id);
+
         foreach (Rooms::wherePropertyId($property->first()->id)->get() as $room) {
             Rooms::wherePropertyId($property->first()->id)->whereTypeId($room->type_id)->delete();
         }
