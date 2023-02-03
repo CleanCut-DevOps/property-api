@@ -13,11 +13,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create("property_types", function (Blueprint $table) {
-            $table->uuid("id")->primary();
+        Schema::create('property_types', function (Blueprint $table) {
+            $table->uuid('id')->primary();
             $table->string('label');
             $table->string('description');
-            $table->text('detailed_description')->nullable();
             $table->boolean('available')->default(true);
             $table->timestamps();
         });
@@ -30,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists("type");
+        Schema::dropIfExists('type');
     }
 };
