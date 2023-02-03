@@ -162,13 +162,13 @@ class Property extends Model
     /**
      * Appends the property's image urls.
      *
-     * @return Collection
+     * @return array<string>
      */
-    public function getImagesAttribute(): Collection
+    public function getImagesAttribute(): array
     {
         $raw = $this->images()->get();
 
-        return $raw->map(fn($image) => $image->url);
+        return $raw->map(fn($image) => $image->url)->toArray();
     }
 
     /**
