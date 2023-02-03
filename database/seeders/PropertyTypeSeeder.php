@@ -33,13 +33,13 @@ class PropertyTypeSeeder extends Seeder
             "available" => true,
         ]);
         PropertyType::create([
-            "label" => "Mansions",
+            "label" => "Mansion",
             "description" => "A large, luxurious residence, typically situated on a large plot of land.",
             "detailed_description" => "A mansion is a large, luxurious residence, typically with several different types of rooms. They are often grand in appearance and are usually situated on a large plot of land.",
             "available" => true,
         ]);
         PropertyType::create([
-            "label" => "Castles",
+            "label" => "Castle",
             "description" => "A type of building built during medieval times, can be found in urban or rural areas.",
             "detailed_description" => "A large, fortified building, often with towers and grand architecture. They are used as a residence for nobility or royalty in the past, but have been converted into museums, hotels or private homes.",
             "available" => false,

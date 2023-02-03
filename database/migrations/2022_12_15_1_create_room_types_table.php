@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create("room_type", function (Blueprint $table) {
+        Schema::create("room_types", function (Blueprint $table) {
             $table->uuid("id")->primary();
             $table->uuid("type_id");
             $table->string('label');
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->boolean('available');
             $table->timestamps();
 
-            $table->foreign('type_id')->references('id')->on('type');
+            $table->foreign('type_id')->references('id')->on('property_types');
         });
     }
 

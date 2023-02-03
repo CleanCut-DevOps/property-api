@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create("type", function (Blueprint $table) {
+        Schema::create("property_types", function (Blueprint $table) {
             $table->uuid("id")->primary();
             $table->string('label');
             $table->string('description');
