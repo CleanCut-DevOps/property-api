@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Traits\UUID;
+use Database\Factories\AddressFactory;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -20,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $zip
  * @property Carbon $updated_at
  * @property-read Property $property
+ * @method static AddressFactory factory(...$parameters)
  * @method static Builder|Address newModelQuery()
  * @method static Builder|Address newQuery()
  * @method static Builder|Address query()
@@ -34,7 +37,7 @@ use Illuminate\Support\Carbon;
  */
 class Address extends Model
 {
-    use UUID;
+    use HasFactory, UUID;
 
     const CREATED_AT = null;
 

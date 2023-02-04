@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Traits\UUID;
+use Database\Factories\RoomsFactory;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -18,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $updated_at
  * @property-read RoomType $type
  * @property-read Property $property
+ * @method static RoomsFactory factory(...$parameters)
  * @method static Builder|Rooms newModelQuery()
  * @method static Builder|Rooms newQuery()
  * @method static Builder|Rooms query()
@@ -29,6 +32,8 @@ use Illuminate\Support\Carbon;
  */
 class Rooms extends Model
 {
+    use HasFactory;
+
     const CREATED_AT = null;
 
     public $appends = ["type"];
