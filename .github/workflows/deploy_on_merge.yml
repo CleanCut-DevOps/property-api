@@ -38,6 +38,7 @@ jobs:
           echo DB_USERNAME="${{ secrets.DB_USERNAME }}" >> .env
           echo DB_PASSWORD="${{ secrets.DB_PASSWORD }}" >> .env
           echo JWT_SECRET="${{ secrets.JWT_SECRET }}" >> .env
+          echo ACCOUNT_API="${{ secrets.ACCOUNT_API }}" >> .env
           php artisan key:generate
           php artisan config:cache
 
@@ -70,6 +71,7 @@ jobs:
             echo DB_PASSWORD="${{ secrets.DB_PASSWORD }}" >> .env
             echo SSL_MODE=REQUIRED >> .env
             echo JWT_SECRET="${{ secrets.JWT_SECRET }}" >> .env
+            echo ACCOUNT_API="${{ secrets.ACCOUNT_API }}" >> .env
             php artisan key:generate
             php artisan config:cache
             sudo certbot renew
