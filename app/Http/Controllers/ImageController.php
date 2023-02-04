@@ -3,88 +3,109 @@
 namespace App\Http\Controllers;
 
 use App\Http\Middleware\BelongsToAccount;
-use App\Http\Middleware\ValidateImageRequest;
 use App\Http\Middleware\ValidateJWT;
-use App\Models\PropertyImage;
+use App\Models\Images;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Exception;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rules\File;
 
 class ImageController extends Controller
 {
-    // Constructor method for ImageController
     public function __construct()
     {
         $this->middleware(ValidateJWT::class);
         $this->middleware(BelongsToAccount::class);
-        $this->middleware(ValidateImageRequest::class);
+
+        $this->validate('store', [
+            'file' => ['required', File::image()->max(12 * 1024)]
+        ], [
+            'file.required' => 'File attribute is required',
+            'file.image' => 'File type must be an image',
+            'file.max' => 'File size must be less than 12MB'
+
+        ]);
+
+        $this->validate('destroy', [
+            'url' => ['required', 'string', 'max:255', 'min:1']
+        ], [
+            'url.required' => 'Url attribute is required',
+            'url.string' => 'Image url must be a string',
+            'url.max' => 'Image url must be less than 255 characters',
+            'url.min' => 'Image url must be at least 1 character'
+        ]);
     }
 
     /**
      * Store a newly created resource in storage.
      *
      * @param Request $request
+     * @param string $id
+     *
      * @return JsonResponse
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, string $id): JsonResponse
     {
         try {
-            $uploadedFile = $request->file('file')->storeOnCloudinary('CleanCut/Property');
-
-            PropertyImage::create([
-                "public_id" => $uploadedFile->getPublicId(),
-                'property_id' => request('id'),
-                'url' => $uploadedFile->getSecurePath()
-            ]);
-
-            return response()->json([
-                "type" => "Successful request",
-                "message" => "Image added successfully to property",
-                "secureURL" => $uploadedFile->getSecurePath(),
-                "images" => PropertyImage::wherePropertyId(request('id'))->get()->map(fn($image) => $image->url)
-            ], 200);
+            $upload = $request->file('file')->storeOnCloudinary('CleanCut/Property');
         } catch (Exception $e) {
             return response()->json([
-                "type" => "Bad Request",
-                "message" => "Image could not be added to property",
-                "error" => $e->getMessage(),
+                'type' => 'Bad Request',
+                'message' => 'Image could not be added to property',
+                'error' => $e->getMessage(),
             ], 400);
         }
+
+        Images::create([
+            'public_id' => $upload->getPublicId(),
+            'property_id' => $id,
+            'url' => $upload->getSecurePath()
+        ]);
+
+        return response()->json([
+            'type' => 'Successful request',
+            'message' => 'Image added successfully to property',
+            'images' => Images::wherePropertyId($id)->get()->map(fn($image) => $image->url)
+        ], 201);
     }
 
     /**
      * Remove the specified resource from storage.
      *
      * @param Request $request
+     * @param string $id
+     *
      * @return JsonResponse
      */
-    public function destroy(Request $request): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
-        $imageModel = PropertyImage::wherePropertyId($request->id)->whereUrl($request->url);
+        $imageModel = Images::wherePropertyId($id)->whereUrl($request->url);
 
         if ($imageModel->exists() > 0) {
             try {
                 Cloudinary::destroy($imageModel->first()->public_id);
 
-                $imageModel->delete();
-
-                return response()->json([
-                    "type" => "Successful request",
-                    "message" => "Image deleted successfully from property",
-                    "images" => PropertyImage::wherePropertyId(request('id'))->get()->map(fn($image) => $image->url)
-                ], 200);
             } catch (Exception $e) {
                 return response()->json([
-                    "type" => "Bad Request",
-                    "message" => "Image could not be deleted from property",
-                    "error" => $e->getMessage(),
+                    'type' => 'Bad Request',
+                    'message' => 'Image could not be deleted from property',
+                    'error' => $e->getMessage(),
                 ], 400);
             }
+
+            $imageModel->delete();
+
+            return response()->json([
+                'type' => 'Successful request',
+                'message' => 'Image deleted successfully from property',
+                'images' => Images::wherePropertyId($id)->get()->map(fn($image) => $image->url)
+            ]);
         } else {
             return response()->json([
-                "type" => "Not found",
-                "message" => "Image not found",
+                'type' => 'Not found',
+                'message' => 'Image not found',
             ], 404);
         }
     }

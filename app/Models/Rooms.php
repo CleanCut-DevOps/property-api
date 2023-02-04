@@ -2,39 +2,44 @@
 
 namespace App\Models;
 
+use App\Traits\UUID;
+use Database\Factories\RoomsFactory;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
- * App\Models\PropertyRooms
+ * App\Models\Rooms
  *
  * @property string $property_id
- * @property string $room_id
+ * @property string $type_id
  * @property int $quantity
- * @property int $updated_at
+ * @property Carbon $updated_at
  * @property-read RoomType $type
  * @property-read Property $property
- * @method static Builder|PropertyRooms newModelQuery()
- * @method static Builder|PropertyRooms newQuery()
- * @method static Builder|PropertyRooms query()
- * @method static Builder|PropertyRooms wherePropertyId($value)
- * @method static Builder|PropertyRooms whereQuantity($value)
- * @method static Builder|PropertyRooms whereRoomId($value)
- * @method static Builder|PropertyRooms whereUpdatedAt($value)
+ * @method static RoomsFactory factory(...$parameters)
+ * @method static Builder|Rooms newModelQuery()
+ * @method static Builder|Rooms newQuery()
+ * @method static Builder|Rooms query()
+ * @method static Builder|Rooms wherePropertyId($value)
+ * @method static Builder|Rooms whereQuantity($value)
+ * @method static Builder|Rooms whereTypeId($value)
+ * @method static Builder|Rooms whereUpdatedAt($value)
  * @mixin Eloquent
  */
-class PropertyRooms extends Model
+class Rooms extends Model
 {
+    use HasFactory;
+
     const CREATED_AT = null;
 
     public $appends = ["type"];
 
-    public $incrementing = false;
     public $timestamps = true;
     protected $table = "rooms";
-    protected $keyType = "string";
 
     /**
      * The attributes that are mass assignable.
@@ -43,7 +48,7 @@ class PropertyRooms extends Model
      */
     protected $fillable = [
         "property_id",
-        "room_id",
+        "type_id",
         "quantity"
     ];
 
@@ -52,14 +57,14 @@ class PropertyRooms extends Model
      *
      * @var array<int, string>
      */
-    protected $hidden = ["property_id", "room_id"];
+    protected $hidden = ["property_id", "type_id"];
 
     /**
      * The attributes that should be cast.
      *
      * @var array<string, string>
      */
-    protected $casts = ["updated_at" => "timestamp"];
+    protected $casts = ["updated_at" => "datetime"];
 
     /**
      * Get the property that owns the rooms.
@@ -78,7 +83,7 @@ class PropertyRooms extends Model
      */
     public function getTypeAttribute(): Model
     {
-        return RoomType::whereId($this->room_id)->first();
+        return $this->type()->first();
     }
 
     /**

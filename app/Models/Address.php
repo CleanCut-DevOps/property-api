@@ -3,13 +3,16 @@
 namespace App\Models;
 
 use App\Traits\UUID;
+use Database\Factories\AddressFactory;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
- * App\Models\PropertyAddress
+ * App\Models\Address
  *
  * @property string $property_id
  * @property string|null $line_1
@@ -17,31 +20,32 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $city
  * @property string|null $state
  * @property string|null $zip
- * @property int $updated_at
+ * @property Carbon $updated_at
  * @property-read Property $property
- * @method static Builder|PropertyAddress newModelQuery()
- * @method static Builder|PropertyAddress newQuery()
- * @method static Builder|PropertyAddress query()
- * @method static Builder|PropertyAddress whereCity($value)
- * @method static Builder|PropertyAddress whereLine1($value)
- * @method static Builder|PropertyAddress whereLine2($value)
- * @method static Builder|PropertyAddress wherePropertyId($value)
- * @method static Builder|PropertyAddress whereState($value)
- * @method static Builder|PropertyAddress whereUpdatedAt($value)
- * @method static Builder|PropertyAddress whereZip($value)
+ * @method static AddressFactory factory(...$parameters)
+ * @method static Builder|Address newModelQuery()
+ * @method static Builder|Address newQuery()
+ * @method static Builder|Address query()
+ * @method static Builder|Address whereCity($value)
+ * @method static Builder|Address whereLine1($value)
+ * @method static Builder|Address whereLine2($value)
+ * @method static Builder|Address wherePropertyId($value)
+ * @method static Builder|Address whereState($value)
+ * @method static Builder|Address whereUpdatedAt($value)
+ * @method static Builder|Address whereZip($value)
  * @mixin Eloquent
  */
-class PropertyAddress extends Model
+class Address extends Model
 {
-    use UUID;
+    use HasFactory, UUID;
 
     const CREATED_AT = null;
 
-    public $incrementing = false;
     public $timestamps = true;
-    protected $table = "addresses";
+    public $incrementing = false;
     protected $primaryKey = "property_id";
     protected $keyType = "string";
+    protected $table = "addresses";
 
     /**
      * The attributes that are mass assignable.
@@ -69,7 +73,7 @@ class PropertyAddress extends Model
      *
      * @var array<string, string>
      */
-    protected $casts = ["updated_at" => "timestamp"];
+    protected $casts = ["updated_at" => "datetime"];
 
     /**
      * Get the property that owns the address.

@@ -3,34 +3,38 @@
 namespace App\Models;
 
 use App\Traits\UUID;
+use Database\Factories\PropertyFactory;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\Property
  *
  * @property string $id
+ * @property string $icon
  * @property string|null $user_id
  * @property string|null $type_id
- * @property string $icon
  * @property string $label
  * @property string|null $description
- * @property int|null $created_at
- * @property int|null $updated_at
- * @property int|null $deleted_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
  * @property-read Model|null $address
- * @property-read Collection|PropertyImage[] $images
- * @property-read Collection|PropertyRooms[] $rooms
+ * @property-read Collection|Images[] $images
+ * @property-read Collection|Rooms[] $rooms
  * @property-read PropertyType|null $type
  * @property-read int|null $images_count
  * @property-read int|null $rooms_count
+ * @method static PropertyFactory factory(...$parameters)
  * @method static EloquentBuilder|Property newModelQuery()
  * @method static EloquentBuilder|Property newQuery()
  * @method static QueryBuilder|Property onlyTrashed()
@@ -50,15 +54,15 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  */
 class Property extends Model
 {
-    use SoftDeletes, UUID;
+    use HasFactory, SoftDeletes, UUID;
 
     public $appends = ["type", "address", "rooms", "images"];
 
     public $timestamps = true;
     public $incrementing = false;
-    protected $table = "property";
     protected $primaryKey = "id";
     protected $keyType = "string";
+    protected $table = "properties";
 
     /**
      * The attributes that are mass assignable.
@@ -66,10 +70,10 @@ class Property extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        "user_id",
-        "type_id",
         "icon",
         "label",
+        "user_id",
+        "type_id",
         "description",
     ];
 
@@ -86,9 +90,9 @@ class Property extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        "deleted_at" => "timestamp",
-        "created_at" => "timestamp",
-        "updated_at" => "timestamp",
+        "deleted_at" => "datetime",
+        "created_at" => "datetime",
+        "updated_at" => "datetime",
     ];
 
     /**
@@ -132,7 +136,7 @@ class Property extends Model
      */
     public function rooms(): HasMany
     {
-        return $this->hasMany(PropertyRooms::class);
+        return $this->hasMany(Rooms::class);
     }
 
     /**
@@ -152,19 +156,19 @@ class Property extends Model
      */
     public function address(): HasOne
     {
-        return $this->hasOne(PropertyAddress::class);
+        return $this->hasOne(Address::class);
     }
 
     /**
      * Appends the property's image urls.
      *
-     * @return Collection
+     * @return array<string>
      */
-    public function getImagesAttribute(): \Illuminate\Support\Collection
+    public function getImagesAttribute(): array
     {
         $raw = $this->images()->get();
 
-        return $raw->map(fn($image) => $image->url);
+        return $raw->map(fn($image) => $image->url)->toArray();
     }
 
     /**
@@ -174,8 +178,6 @@ class Property extends Model
      */
     public function images(): HasMany
     {
-        return $this->hasMany(PropertyImage::class);
+        return $this->hasMany(Images::class);
     }
-
-
 }
