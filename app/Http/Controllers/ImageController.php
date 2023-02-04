@@ -49,10 +49,7 @@ class ImageController extends Controller
     public function store(Request $request, string $id): JsonResponse
     {
         try {
-            $upload = Cloudinary::upload($request->file('file')->getRealPath(), [
-                'folder' => 'CleanCut/Property',
-                'secure' => true
-            ]);
+            $upload = $request->file('file')->storeOnCloudinary('CleanCut/Property');
         } catch (Exception $e) {
             return response()->json([
                 'type' => 'Bad Request',
@@ -71,7 +68,7 @@ class ImageController extends Controller
             'type' => 'Successful request',
             'message' => 'Image added successfully to property',
             'images' => Images::wherePropertyId($id)->get()->map(fn($image) => $image->url)
-        ], 200);
+        ], 201);
     }
 
     /**
@@ -104,7 +101,7 @@ class ImageController extends Controller
                 'type' => 'Successful request',
                 'message' => 'Image deleted successfully from property',
                 'images' => Images::wherePropertyId($id)->get()->map(fn($image) => $image->url)
-            ], 200);
+            ]);
         } else {
             return response()->json([
                 'type' => 'Not found',
