@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use App\Traits\UUID;
+use Database\Factories\PropertyTypeFactory;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\PropertyType
@@ -15,21 +18,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $id
  * @property string $label
  * @property string $description
- * @property string|null $detailed_description
  * @property bool $available
- * @property int|null $created_at
- * @property int|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property-read Collection|Property[] $properties
  * @property-read int|null $properties_count
  * @property-read Collection|RoomType[] $rooms
  * @property-read int|null $rooms_count
+ * @method static PropertyTypeFactory factory(...$parameters)
  * @method static Builder|PropertyType newModelQuery()
  * @method static Builder|PropertyType newQuery()
  * @method static Builder|PropertyType query()
  * @method static Builder|PropertyType whereAvailable($value)
  * @method static Builder|PropertyType whereCreatedAt($value)
  * @method static Builder|PropertyType whereDescription($value)
- * @method static Builder|PropertyType whereDetailedDescription($value)
  * @method static Builder|PropertyType whereId($value)
  * @method static Builder|PropertyType whereLabel($value)
  * @method static Builder|PropertyType whereUpdatedAt($value)
@@ -37,12 +39,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class PropertyType extends Model
 {
-    use UUID;
+    use HasFactory, UUID;
 
-    public $incrementing = false;
     public $timestamps = true;
-    protected $table = "type";
-    protected $primaryKey = "id";
+    public $incrementing = false;
+    protected $primaryKey = 'id';
+    protected $keyType = 'string';
+    protected $table = 'property_types';
 
     /**
      * The attributes that are mass assignable.
@@ -50,10 +53,9 @@ class PropertyType extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        "label",
-        "description",
-        "detailed_description",
-        "available",
+        'label',
+        'available',
+        'description'
     ];
 
     /**
@@ -62,13 +64,13 @@ class PropertyType extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        "created_at" => "timestamp",
-        "updated_at" => "timestamp",
-        "available" => "boolean"
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'available' => 'boolean'
     ];
 
     /**
-     * Get the properties for the type.
+     * Get properties of this type.
      *
      * @return HasMany
      */
@@ -78,7 +80,7 @@ class PropertyType extends Model
     }
 
     /**
-     * Get the type's room types.
+     * Get room types of this type.
      *
      * @return HasMany
      */

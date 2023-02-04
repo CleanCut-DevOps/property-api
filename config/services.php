@@ -31,4 +31,5 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'account_api' => env('ACCOUNT_API', 'http://localhost:8001')
 ];

@@ -7,7 +7,7 @@ use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use function PHPUnit\Framework\isEmpty;
+use Illuminate\Http\Response;
 
 class BelongsToAccount
 {
@@ -15,24 +15,23 @@ class BelongsToAccount
      * Handle an incoming request.
      *
      * @param Request $request
-     * @param Closure(Request): (JSONResponse|RedirectResponse) $next
-     * @return JSONResponse|RedirectResponse
+     * @param Closure(Request): (JSONResponse|RedirectResponse|Response) $next
+     * @return JSONResponse|RedirectResponse|Response
      */
-    public function handle(Request $request, Closure $next): JSONResponse|RedirectResponse
+    public function handle(Request $request, Closure $next): JSONResponse|RedirectResponse|Response
     {
-        $property_id = request("id");
-        $requestedProperty = Property::whereId($property_id);
+        $requestedProperty = Property::whereId(request('id'));
 
         if ($requestedProperty->exists() < 1) {
             return response()->json([
-                "type" => "Not found",
-                "message" => "Property not found"
+                'type' => 'Not found',
+                'message' => 'Property not found'
             ], 404);
 
         } else if ($requestedProperty->first()->user_id !== $request->user_id) {
             return response()->json([
-                "type" => "Unauthorized",
-                "message" => "Property does not belong to user"
+                'type' => 'Unauthorized',
+                'message' => 'Property does not belong to user'
             ], 403);
 
         }
