@@ -53,7 +53,7 @@ class TypeController extends Controller
                     'message' => 'Displaying attributes of this type of property with all its rooms',
                     'propertyType' => $type
                 ]);
-            } else if (request('display') == 'roomsOnly') {
+            } else if (request('display') == 'onlyRooms') {
                 return response()->json([
                     'type' => 'Successful request',
                     'message' => 'Displaying attributes of all types of rooms for this property',
