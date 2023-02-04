@@ -1,4 +1,4 @@
-name: Test Account API on pull request
+name: Test Property API on pull request
 run-name: ${{ github.actor }} is testing the application ✅
 
 on:

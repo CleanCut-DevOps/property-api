@@ -1,4 +1,4 @@
-name: Deploy Account API to Digitalocean
+name: Deploy Property API to Digitalocean
 run-name: ${{ github.actor }} is deploying the application 🚀
 
 on:
