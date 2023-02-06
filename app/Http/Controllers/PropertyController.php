@@ -10,6 +10,7 @@ use App\Models\Rooms;
 use App\Models\RoomType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 
 class PropertyController extends Controller
@@ -51,6 +52,7 @@ class PropertyController extends Controller
         $this->validate('update', [
             'icon' => ['string', 'max:24'],
             'label' => ['string', 'max:255'],
+            'favourite' => ['boolean'],
             'description' => ['nullable', 'string', 'max:255'],
             'type_id' => [Rule::exists('property_types', 'id')],
             'line_1' => ['string', 'max:255'],
@@ -60,12 +62,13 @@ class PropertyController extends Controller
             'zip' => ['numeric'],
             'rooms' => ['nullable', 'array'],
             'rooms.*.id' => ['required_with:rooms', Rule::exists('room_types', 'id')],
-            'rooms.*.quantity' => ['required_with:rooms', 'numeric', 'integer'],
+            'rooms.*.quantity' => ['required_with:rooms', 'numeric', 'integer']
         ], [
             'icon.string' => 'The icon must be a string.',
             'icon.max' => 'The icon must be less than 24 characters.',
             'label.string' => 'The label must be a string.',
             'label.max' => 'The label must be less than 255 characters.',
+            'favourite.boolean' => 'Favourite attribute must be a boolean.',
             'description.string' => 'The description must be a string.',
             'description.max' => 'The description must be less than 255 characters.',
             'type_id.exists' => 'The type_id must be a valid property type.',
@@ -150,14 +153,16 @@ class PropertyController extends Controller
     {
         $property = Property::whereId($id)->first();
 
-        if ($request->exists('rooms')) {
+        // Determine if the request contains a given input item key.
+
+        if ($request->has('rooms')) {
             $errors = [];
 
             foreach (request('rooms') as $room) {
                 $roomTypeID = $room['id'];
 
                 if (
-                    !RoomType::wherePropertyTypeId($request->exists('type_id') ? request('type_id') : $property->type_id)
+                    !RoomType::wherePropertyTypeId($request->has('type_id') ? request('type_id') : $property->type_id)
                     ->whereId($roomTypeID)
                     ->exists()
                 ) {
@@ -180,25 +185,38 @@ class PropertyController extends Controller
             }
         }
 
-        $property->update($request->only(['icon', 'label', 'description', 'type_id']));
+        if ($request->has('type_id')) {
+            if (strcasecmp(request('type_id'), $property->type_id)) {
+                Rooms::wherePropertyId($property->id)->delete();
 
-        $property->address->update($request->only(['line_1', 'line_2', 'city', 'state', 'zip']));
-
-        if ($request->exists('type_id')) {
-            Rooms::wherePropertyId($property->id)->delete();
-
-            foreach (RoomType::wherePropertyTypeId(request('type_id'))->get() as $room) {
-                Rooms::create(['quantity' => 0, 'type_id' => $room->id, 'property_id' => $property->id]);
+                foreach (RoomType::wherePropertyTypeId(request('type_id'))->get() as $room) {
+                    Rooms::create(['quantity' => 0, 'type_id' => $room->id, 'property_id' => $property->id]);
+                }
             }
+
         }
 
-        if ($request->exists('rooms')) {
+        if ($request->has('rooms')) {
             foreach (request('rooms') as $room) {
                 $roomTypeID = $room['id'];
                 $quantity = $room['quantity'];
 
                 Rooms::wherePropertyId($property->id)->whereTypeId($roomTypeID)->update(['quantity' => $quantity]);
             }
+        }
+
+        $property->update($request->only(['icon', 'label', 'description', 'type_id']));
+
+        $property->address->update($request->only(['line_1', 'line_2', 'city', 'state', 'zip']));
+
+        if ($request->has('favourite')) {
+            if (request('favourite')) {
+                $property->favourite_at = Carbon::now();
+            } else {
+                $property->favourite_at = null;
+            }
+
+            $property->save();
         }
 
         return response()->json([
