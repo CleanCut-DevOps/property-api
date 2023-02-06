@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Carbon;
 
+
 /**
  * App\Models\Property
  *
@@ -28,6 +29,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
+ * @property Carbon|null $verified_at
+ * @property Carbon|null $favourite_at
  * @property-read Model|null $address
  * @property-read Collection|Images[] $images
  * @property-read Collection|Rooms[] $rooms
@@ -42,12 +45,14 @@ use Illuminate\Support\Carbon;
  * @method static EloquentBuilder|Property whereCreatedAt($value)
  * @method static EloquentBuilder|Property whereDeletedAt($value)
  * @method static EloquentBuilder|Property whereDescription($value)
+ * @method static EloquentBuilder|Property whereFavouriteAt($value)
  * @method static EloquentBuilder|Property whereIcon($value)
  * @method static EloquentBuilder|Property whereId($value)
  * @method static EloquentBuilder|Property whereLabel($value)
  * @method static EloquentBuilder|Property whereTypeId($value)
  * @method static EloquentBuilder|Property whereUpdatedAt($value)
  * @method static EloquentBuilder|Property whereUserId($value)
+ * @method static EloquentBuilder|Property whereVerifiedAt($value)
  * @method static QueryBuilder|Property withTrashed()
  * @method static QueryBuilder|Property withoutTrashed()
  * @mixin Eloquent
@@ -75,6 +80,8 @@ class Property extends Model
         "user_id",
         "type_id",
         "description",
+        "verified_at",
+        "favourite_at",
     ];
 
     /**
@@ -93,6 +100,8 @@ class Property extends Model
         "deleted_at" => "datetime",
         "created_at" => "datetime",
         "updated_at" => "datetime",
+        "verified_at" => "datetime",
+        "favourite_at" => "datetime"
     ];
 
     /**
