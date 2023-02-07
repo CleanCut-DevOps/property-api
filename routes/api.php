@@ -25,8 +25,8 @@ Route::fallback(function () {
 });
 
 // CR Properties
-Route::get('/', [PropertyController::class, 'index']);
-Route::post('/', [PropertyController::class, 'store']);
+Route::get('/property', [PropertyController::class, 'index']);
+Route::post('/property', [PropertyController::class, 'store']);
 
 // Types of property
 Route::get('/types', [TypeController::class, 'index']);
