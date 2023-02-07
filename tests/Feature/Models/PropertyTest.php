@@ -70,7 +70,7 @@ class PropertyTest extends TestCase
      */
     public function test_get_all_properties(): void
     {
-        $response = $this->withAuth(true)->get('/');
+        $response = $this->withAuth(true)->get('/property');
 
         $response->assertOk()->assertJsonStructure([
             'type',
@@ -124,7 +124,7 @@ class PropertyTest extends TestCase
      */
     public function test_get_all_properties_with_invalid_credentials(): void
     {
-        $response = $this->get('/');
+        $response = $this->get('/property');
 
         $response->assertUnauthorized()->assertJsonStructure([
             'type',
@@ -139,7 +139,7 @@ class PropertyTest extends TestCase
      */
     public function test_get_property(): void
     {
-        $get = $this->withAuth(true)->get("/");
+        $get = $this->withAuth(true)->get('/property');
 
         $response = $this->withAuth()->get("/{$get->json()['properties'][0]['id']}");
 
@@ -195,7 +195,7 @@ class PropertyTest extends TestCase
     {
         $id = Property::first()->id;
 
-        $response = $this->withHeaders([])->get("/$id");
+        $response = $this->withHeaders([])->get('/$id');
 
         $response->assertUnauthorized()->assertJsonStructure([
             'type',
@@ -212,7 +212,7 @@ class PropertyTest extends TestCase
     {
         $id = fake()->uuid;
 
-        $response = $this->withAuth()->get("/$id");
+        $response = $this->withAuth()->get('/$id');
 
         $response->assertNotFound()->assertJsonStructure([
             'type',
@@ -227,7 +227,7 @@ class PropertyTest extends TestCase
      */
     public function test_create_property(): void
     {
-        $response = $this->withAuth()->post('/');
+        $response = $this->withAuth()->post('/property');
 
         $response->assertCreated()->assertJsonStructure([
             'type',
@@ -261,7 +261,7 @@ class PropertyTest extends TestCase
      */
     public function test_create_property_with_invalid_data(): void
     {
-        $response = $this->withAuth()->post('/', [
+        $response = $this->withAuth()->post('/property', [
             'type_id' => 'Invalid property type',
             'zip' => 'Invalid zip code'
         ]);
@@ -280,7 +280,7 @@ class PropertyTest extends TestCase
      */
     public function test_create_property_with_invalid_credentials(): void
     {
-        $response = $this->post('/');
+        $response = $this->post('/property');
 
         $response->assertUnauthorized()->assertJsonStructure([
             'type',
@@ -295,7 +295,7 @@ class PropertyTest extends TestCase
      */
     public function test_update_property(): void
     {
-        $get = $this->withAuth(true)->get("/");
+        $get = $this->withAuth(true)->get('/property');
 
         $response = $this->withAuth()->put("/{$get->json()['properties'][0]['id']}", [
             'label' => 'Updated Label'
@@ -314,7 +314,7 @@ class PropertyTest extends TestCase
      */
     public function test_update_property_with_invalid_data(): void
     {
-        $get = $this->withAuth(true)->get("/");
+        $get = $this->withAuth(true)->get('/property');
 
         $response = $this->withAuth()->put("/{$get->json()['properties'][0]['id']}", [
             'label' => 'Updated Label',
@@ -343,7 +343,7 @@ class PropertyTest extends TestCase
     {
         $id = Property::first()->id;
 
-        $response = $this->put("/$id", [
+        $response = $this->put('/$id', [
             'label' => 'Some label'
         ]);
 
@@ -362,7 +362,7 @@ class PropertyTest extends TestCase
     {
         $id = fake()->uuid;
 
-        $response = $this->withAuth()->put("/$id", [
+        $response = $this->withAuth()->put('/$id', [
             'label' => 'Some label'
         ]);
 
@@ -379,7 +379,7 @@ class PropertyTest extends TestCase
      */
     public function test_delete_property(): void
     {
-        $get = $this->withAuth(true)->get("/");
+        $get = $this->withAuth(true)->get('/property');
 
         $response = $this->withAuth()->delete("/{$get->json()['properties'][0]['id']}");
 
@@ -398,7 +398,7 @@ class PropertyTest extends TestCase
     {
         $id = Property::first()->id;
 
-        $response = $this->delete("/$id");
+        $response = $this->delete('/$id');
 
         $response->assertUnauthorized()->assertJsonStructure([
             'type',
@@ -415,7 +415,7 @@ class PropertyTest extends TestCase
     {
         $id = fake()->uuid;
 
-        $response = $this->withAuth()->delete("/$id");
+        $response = $this->withAuth()->delete('/$id');
 
         $response->assertNotFound()->assertJsonStructure([
             'type',
@@ -430,7 +430,7 @@ class PropertyTest extends TestCase
      */
     public function test_create_property_image(): void
     {
-        $get = $this->withAuth(true)->get("/");
+        $get = $this->withAuth(true)->get('/property');
 
         $response = $this->withAuth()->post("/{$get->json()['properties'][0]['id']}/image", [
             'file' => UploadedFile::fake()->image('test.png', 640, 480)
@@ -450,7 +450,7 @@ class PropertyTest extends TestCase
      */
     public function test_create_property_image_with_invalid_data(): void
     {
-        $get = $this->withAuth(true)->get("/");
+        $get = $this->withAuth(true)->get('/property');
 
         $response = $this->withAuth()->post("/{$get->json()['properties'][0]['id']}/image");
 
@@ -470,7 +470,7 @@ class PropertyTest extends TestCase
     {
         $id = Property::first()->id;
 
-        $response = $this->post("/$id/image", [
+        $response = $this->post('/$id/image', [
             'file' => UploadedFile::fake()->image('test.png', 640, 480)
         ]);
 
@@ -489,7 +489,7 @@ class PropertyTest extends TestCase
     {
         $id = fake()->uuid;
 
-        $response = $this->withAuth()->post("/$id/image", [
+        $response = $this->withAuth()->post('/$id/image', [
             'file' => UploadedFile::fake()->image('test.png', 640, 480)
         ]);
 
@@ -506,7 +506,7 @@ class PropertyTest extends TestCase
      */
     public function test_delete_property_image(): void
     {
-        $get = $this->withAuth(true)->get("/");
+        $get = $this->withAuth(true)->get('/property');
 
         $post = $this->withAuth()->post("/{$get->json()['properties'][0]['id']}/image", [
             'file' => UploadedFile::fake()->image('test.png', 640, 480)
@@ -529,7 +529,7 @@ class PropertyTest extends TestCase
      */
     public function test_delete_property_image_with_invalid_data(): void
     {
-        $get = $this->withAuth(true)->get("/");
+        $get = $this->withAuth(true)->get('/property');
 
         $response = $this->withAuth()->delete("/{$get->json()['properties'][0]['id']}/image");
 
@@ -549,7 +549,7 @@ class PropertyTest extends TestCase
     {
         $id = Property::first()->id;
 
-        $response = $this->delete("/$id/image", [
+        $response = $this->delete('/$id/image', [
             'url' => 'https://example.com/image.png'
         ]);
 
@@ -568,7 +568,7 @@ class PropertyTest extends TestCase
     {
         $id = fake()->uuid;
 
-        $response = $this->withAuth()->delete("/$id/image", [
+        $response = $this->withAuth()->delete('/$id/image', [
             'url' => 'https://example.com/image.png'
         ]);
 
@@ -585,7 +585,7 @@ class PropertyTest extends TestCase
      */
     public function test_delete_property_image_with_invalid_image(): void
     {
-        $get = $this->withAuth(true)->get("/");
+        $get = $this->withAuth(true)->get('/property');
 
         $response = $this->withAuth()->delete("/{$get->json()['properties'][0]['id']}/image", [
             'url' => 'https://example.com/image.png'
