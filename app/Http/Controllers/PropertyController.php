@@ -100,7 +100,7 @@ class PropertyController extends Controller
         return response()->json([
             'type' => 'Successful request',
             'message' => 'Properties retrieved successfully',
-            'properties' => Property::whereUserId(request('user_id'))->get()
+            'properties' => Property::whereUserId(request('user_id'))->orderBy('label')->get()
         ]);
     }
 
@@ -153,7 +153,6 @@ class PropertyController extends Controller
     {
         $property = Property::whereId($id)->first();
 
-        // Determine if the request contains a given input item key.
 
         if ($request->has('rooms')) {
             $errors = [];
@@ -163,8 +162,8 @@ class PropertyController extends Controller
 
                 if (
                     !RoomType::wherePropertyTypeId($request->has('type_id') ? request('type_id') : $property->type_id)
-                    ->whereId($roomTypeID)
-                    ->exists()
+                        ->whereId($roomTypeID)
+                        ->exists()
                 ) {
                     $index = array_search($room, request('rooms'));
 
@@ -172,8 +171,6 @@ class PropertyController extends Controller
                         "rooms.$index.id" => "The room type {$roomTypeID} does not exist."
                     ];
                 }
-
-
             }
 
             if (count($errors) > 0) {
@@ -216,6 +213,14 @@ class PropertyController extends Controller
                 $property->favourite_at = null;
             }
 
+            $property->save();
+        }
+
+        if (
+            $request->hasAny(['type_id', 'line_1', 'line_2', 'city', 'state', 'zip']) ||
+            ($request->has('rooms') && count(request('rooms')) > 0)
+        ) {
+            $property->verified_at = null;
             $property->save();
         }
 
