@@ -167,9 +167,7 @@ class PropertyController extends Controller
                 ) {
                     $index = array_search($room, request('rooms'));
 
-                    $errors[] = [
-                        "rooms.$index.id" => "The room type {$roomTypeID} does not exist."
-                    ];
+                    $errors["rooms.$index.id"] = "The room type {$roomTypeID} does not exist.";
                 }
             }
 
