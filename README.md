@@ -4,7 +4,7 @@
 
 Responsible for managing and storing information about users' properties, such as the address and type of each property
 they have. This information could be used to help users manage their properties, as well as to provide relevant
-information to cleaning service providers to help them deliver their services.
+information to the contracted cleaners to help them deliver their services.
 
 > Access the API on https://property-api.klenze.com.au
 
@@ -16,7 +16,7 @@ To get started, you'll need to have the following software installed on your loc
 -   PHP 8
 -   Composer
 
-Once you have MySQL, create a schema in the MySQL DB called `property`.
+Once you have MySQL, create a schema in the MySQL DB called `properties`.
 
 Once you have PHP 8 and Composer installed, clone this repository to your local machine.
 
@@ -29,9 +29,7 @@ Next, navigate to the root directory of the project and install the dependencies
 ```bash
 $ cd property-api
 
-$ composer update
-
-$ composer install
+$ composer install -q -n --no-ansi --no-scripts --no-progress --prefer-dist
 ```
 
 Next, copy the `.env.example` file to `.env`.
@@ -50,21 +48,21 @@ $ cp .env.example .env
 
 $ php artisan key:generate
 
-$ php artisan config:cache
+$ php artisan optimize
 ```
 
 Next, run the database migration to create the tables in the database.
 
 ```bash
-$ php artisan migrate:fresh
+$ php artisan migrate:fresh --seed
 ```
 
 Finally, start the development server.
 
 ```bash
-$ php artisan serve --port=8003
+$ php artisan serve --port=8002
 ```
 
-The application will now be running on http://localhost:8003.
+The application will now be running on http://localhost:8002.
 
 If you're running this on a server, point the server to the entry point: `public/index.php`.

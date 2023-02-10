@@ -18,5 +18,7 @@ class DatabaseSeeder extends Seeder
             PropertyTypeSeeder::class,
             RoomTypeSeeder::class,
         ]);
+
+        $this->call(PropertySeeder::class);
     }
 }
